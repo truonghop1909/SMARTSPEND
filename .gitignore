@@ -1,0 +1,30 @@
+# Java / Maven
+**/target/
+*.class
+*.jar
+*.war
+
+# VS Code
+.vscode/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Node.js
+**/node_modules/
+**/dist/
+**/build/
+
+# Logs
+*.log
+
+# Operating system
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+application-local.properties
+backend/src/main/resources/application.properties
