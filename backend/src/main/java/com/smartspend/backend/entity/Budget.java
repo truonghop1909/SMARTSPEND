@@ -5,8 +5,6 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -18,8 +16,8 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "wallets")
-public class Wallet {
+@Table(name = "budgets")
+public class Budget {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,21 +27,21 @@ public class Wallet {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
     @Column(nullable = false)
-    private String name;
+    private Integer year;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private WalletType type;
+    private Integer month;
 
-    @Column(nullable = false, length = 3)
-    private String currency = "VND";
+    @Column(name = "limit_amount", nullable = false, precision = 15, scale = 2)
+    private BigDecimal limitAmount;
 
-    @Column(nullable = false, precision = 15, scale = 2)
-    private BigDecimal balance = BigDecimal.ZERO;
-
-    @Column(name = "is_archived", nullable = false)
-    private boolean archived = false;
+    @Column(name = "spent_amount", nullable = false, precision = 15, scale = 2)
+    private BigDecimal spentAmount = BigDecimal.ZERO;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -57,13 +55,8 @@ public class Wallet {
 
         createdAt = now;
         updatedAt = now;
-
-        if (currency == null || currency.isBlank()) {
-            currency = "VND";
-        }
-
-        if (balance == null) {
-            balance = BigDecimal.ZERO;
+        if (spentAmount == null) {
+            spentAmount = BigDecimal.ZERO;
         }
     }
 
@@ -88,44 +81,44 @@ public class Wallet {
         this.user = user;
     }
 
-    public String getName() {
-        return name;
+    public Category getCategory() {
+        return category;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setCategory(Category category) {
+        this.category = category;
     }
 
-    public WalletType getType() {
-        return type;
+    public Integer getYear() {
+        return year;
     }
 
-    public void setType(WalletType type) {
-        this.type = type;
+    public void setYear(Integer year) {
+        this.year = year;
     }
 
-    public String getCurrency() {
-        return currency;
+    public Integer getMonth() {
+        return month;
     }
 
-    public void setCurrency(String currency) {
-        this.currency = currency;
+    public void setMonth(Integer month) {
+        this.month = month;
     }
 
-    public BigDecimal getBalance() {
-        return balance;
+    public BigDecimal getLimitAmount() {
+        return limitAmount;
     }
 
-    public void setBalance(BigDecimal balance) {
-        this.balance = balance;
+    public void setLimitAmount(BigDecimal limitAmount) {
+        this.limitAmount = limitAmount;
     }
 
-    public boolean isArchived() {
-        return archived;
+    public BigDecimal getSpentAmount() {
+        return spentAmount;
     }
 
-    public void setArchived(boolean archived) {
-        this.archived = archived;
+    public void setSpentAmount(BigDecimal spentAmount) {
+        this.spentAmount = spentAmount;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -134,9 +127,5 @@ public class Wallet {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 }
