@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.smartspend.backend.entity.Wallet;
+import com.smartspend.backend.entity.wallet.Wallet;
 import com.smartspend.backend.repository.WalletRepository;
 import com.smartspend.backend.service.WalletService;
 

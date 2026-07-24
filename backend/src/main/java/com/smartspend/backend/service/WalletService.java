@@ -2,7 +2,7 @@ package com.smartspend.backend.service;
 
 import java.util.List;
 
-import com.smartspend.backend.entity.Wallet;
+import com.smartspend.backend.entity.wallet.Wallet;
 
 public interface WalletService {
 
