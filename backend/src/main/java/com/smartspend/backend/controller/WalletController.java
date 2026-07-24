@@ -6,7 +6,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.smartspend.backend.entity.wallet.Wallet;
+import com.smartspend.backend.common.dto.ApiResponse;
+import com.smartspend.backend.dto.wallet.WalletResponse;
 import com.smartspend.backend.service.WalletService;
 
 @RestController
@@ -20,9 +21,9 @@ public class WalletController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Wallet> getWalletById(@PathVariable Long id) {
-        Wallet wallet = walletService.getWalletById(id);
+    public ResponseEntity<ApiResponse<WalletResponse>> getWalletById(@PathVariable Long id) {
+        WalletResponse wallet = WalletResponse.from(walletService.getWalletById(id));
 
-        return ResponseEntity.ok(wallet);
+        return ResponseEntity.ok(ApiResponse.success(wallet));
     }
 }

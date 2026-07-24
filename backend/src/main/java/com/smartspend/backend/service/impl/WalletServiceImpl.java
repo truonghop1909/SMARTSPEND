@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.smartspend.backend.common.exception.AppException;
+import com.smartspend.backend.common.exception.ErrorCode;
 import com.smartspend.backend.entity.wallet.Wallet;
 import com.smartspend.backend.repository.WalletRepository;
 import com.smartspend.backend.service.WalletService;
@@ -25,7 +27,7 @@ public class WalletServiceImpl implements WalletService {
     @Override
     public Wallet getWalletById(Long id) {
         return walletRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.WALLET_NOT_FOUND));
     }
 
     @Override
