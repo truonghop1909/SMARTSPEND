@@ -26,5 +26,8 @@ Thumbs.db
 # Environment files
 .env
 .env.*
+!.env.example
 application-local.properties
 backend/src/main/resources/application.properties
+backend/src/main/resources/application-dev.yml
+backend/src/main/resources/application-prod.yml
