@@ -1,4 +1,4 @@
-package com.smartspend.backend;
+package com.smartspend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
