@@ -14,9 +14,9 @@ public enum ErrorCode {
             "Dữ liệu đầu vào không hợp lệ"
     ),
 
-    BAD_REQUEST(
+    INVALID_REQUEST(
             HttpStatus.BAD_REQUEST,
-            "BAD_REQUEST",
+            "INVALID_REQUEST",
             "Yêu cầu không hợp lệ"
     ),
 
@@ -42,6 +42,12 @@ public enum ErrorCode {
             HttpStatus.NOT_FOUND,
             "RESOURCE_NOT_FOUND",
             "Không tìm thấy tài nguyên"
+    ),
+
+    METHOD_NOT_ALLOWED(
+            HttpStatus.METHOD_NOT_ALLOWED,
+            "METHOD_NOT_ALLOWED",
+            "Phương thức HTTP không được hỗ trợ"
     ),
 
     CONFLICT(
