@@ -3,15 +3,25 @@ services:
     image: mysql:8.0.37
     container_name: smartspend-mysql
     restart: unless-stopped
+
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-smartspend}
+      MYSQL_USER: ${MYSQL_USER:-smartspend}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
+
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - "${MYSQL_PORT:-3307}:3306"
+
     volumes:
       - smartspend_mysql_data:/var/lib/mysql
+
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD}"]
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD}"
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -21,11 +31,18 @@ services:
     image: redis:7.2-alpine
     container_name: smartspend-redis
     restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
+
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+
     ports:
       - "${REDIS_PORT:-6379}:6379"
+
     volumes:
       - smartspend_redis_data:/data
+
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s

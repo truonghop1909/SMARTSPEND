@@ -6,60 +6,72 @@
 
 ---
 
-## 1. Giới thiệu
+# 1. Giới thiệu
 
-### 1.1 Mục đích
+## 1.1 Mục đích
 
 Tài liệu này định nghĩa các quy ước lập trình được sử dụng trong dự án **SmartSpend**.
 
-Mục tiêu là giúp mã nguồn:
+Mục tiêu:
 
-- Dễ đọc.
-- Dễ bảo trì.
-- Dễ kiểm thử.
-- Nhất quán giữa các module.
-- Hạn chế lỗi do cách viết code không đồng nhất.
+* Code dễ đọc.
+* Code dễ bảo trì.
+* Code dễ kiểm thử.
+* Cấu trúc nhất quán giữa các module.
+* Hạn chế lỗi do cách viết code không đồng nhất.
+* Giữ đúng kiến trúc đã thống nhất.
+* Hạn chế phụ thuộc giữa các module.
+* Đảm bảo các business rule được xử lý đúng tầng.
 
-Mọi mã nguồn được thêm vào dự án nên tuân thủ các quy tắc trong tài liệu này.
-
----
-
-## 2. Công nghệ và phiên bản
-
-| Thành phần | Công nghệ |
-|---|---|
-| Ngôn ngữ | Java 21 |
-| Framework | Spring Boot 3 |
-| ORM | Spring Data JPA |
-| Validation | Jakarta Bean Validation |
-| Database | MySQL 8 |
-| Cache | Redis |
-| Migration | Flyway |
-| Build Tool | Maven |
-| Mapping | MapStruct |
-| Logging | SLF4J + Logback |
-| API Docs | Swagger/OpenAPI |
+Mọi mã nguồn mới nên tuân thủ tài liệu này.
 
 ---
 
-## 3. Nguyên tắc chung
+# 2. Công nghệ và phiên bản
 
-| Nguyên tắc | Mô tả |
-|---|---|
-| Consistency | Cách viết nhất quán quan trọng hơn cách viết ngắn |
-| Readability | Ưu tiên code dễ đọc |
-| Single Responsibility | Mỗi class chỉ đảm nhiệm một nhiệm vụ |
-| Fail Fast | Kiểm tra dữ liệu đầu vào càng sớm càng tốt |
-| DTO Boundary | Không nhận hoặc trả Entity trực tiếp qua API |
-| Explicit Code | Tránh logic ngầm và giá trị khó hiểu |
-| No Sensitive Logging | Không ghi log mật khẩu, token hoặc API Key |
-| BigDecimal for Money | Mọi dữ liệu tiền tệ phải dùng `BigDecimal` |
+| Thành phần         | Công nghệ               |
+| ------------------ | ----------------------- |
+| Ngôn ngữ           | Java 21                 |
+| Framework          | Spring Boot 3.5         |
+| Web                | Spring Web MVC          |
+| Security           | Spring Security         |
+| ORM                | Spring Data JPA         |
+| Validation         | Jakarta Bean Validation |
+| Database           | MySQL 8                 |
+| Cache / Rate Limit | Redis                   |
+| Migration          | Flyway                  |
+| JWT                | JJWT                    |
+| Build Tool         | Maven                   |
+| Mapping            | MapStruct               |
+| Logging            | SLF4J + Logback         |
+| API Docs           | Springdoc OpenAPI       |
+| Test               | JUnit 5 + Mockito       |
+| API Testing        | Postman                 |
 
 ---
 
-## 4. Cấu trúc package
+# 3. Nguyên tắc chung
 
-SmartSpend sử dụng cách tổ chức **Package by Feature**.
+| Nguyên tắc            | Mô tả                                                             |
+| --------------------- | ----------------------------------------------------------------- |
+| Consistency           | Cách viết nhất quán quan trọng hơn viết ngắn                      |
+| Readability           | Ưu tiên code dễ đọc                                               |
+| Single Responsibility | Mỗi class có trách nhiệm rõ ràng                                  |
+| Fail Fast             | Kiểm tra lỗi càng sớm càng tốt                                    |
+| DTO Boundary          | Không nhận hoặc trả Entity trực tiếp qua API                      |
+| Explicit Code         | Tránh logic ngầm khó theo dõi                                     |
+| Ownership First       | Mọi dữ liệu cá nhân phải kiểm tra quyền sở hữu                    |
+| Security Context      | Không nhận `userId` từ Request nếu có thể lấy từ Security Context |
+| No Sensitive Logging  | Không log password, token hoặc API Key                            |
+| BigDecimal for Money  | Tiền phải dùng `BigDecimal`                                       |
+| Flyway First          | Schema do Flyway quản lý                                          |
+| Soft Delete Aware     | Query Transaction phải loại dữ liệu đã xóa                        |
+
+---
+
+# 4. Cấu trúc package
+
+SmartSpend sử dụng **Package by Feature**.
 
 ```text
 com.smartspend
@@ -76,40 +88,50 @@ com.smartspend
 └── security
 ```
 
-Mỗi module chứa các tầng riêng:
+Ví dụ module Transaction:
 
 ```text
-transaction
-├── controller
-├── service
-├── repository
-├── entity
-├── dto
-│   ├── request
-│   └── response
-├── mapper
-└── specification
+transaction/
+├── controller/
+├── dto/
+│   ├── request/
+│   └── response/
+├── entity/
+├── mapper/
+├── repository/
+└── service/
 ```
 
-### Quy tắc
+`TransactionSpecifications` hiện được đặt trong:
 
-- Tên package viết thường.
-- Không dùng dấu gạch dưới.
-- Không đặt business logic trong `config` hoặc `util`.
-- Không để module truy cập trực tiếp Controller của module khác.
-- Hạn chế Repository được sử dụng bên ngoài module sở hữu.
+```text
+transaction/repository/
+```
+
+Không tạo package riêng chỉ để chứa một file nếu chưa thực sự cần.
+
+## Quy tắc
+
+* Package viết thường.
+* Không dùng `_` trong tên package.
+* Không đặt business logic trong `config`.
+* Không đặt business logic trong `util`.
+* Controller module này không gọi Controller module khác.
+* Hạn chế gọi Repository module khác nếu Service của module đó có thể cung cấp nghiệp vụ cần thiết.
+* Không tạo package rỗng.
 
 ---
 
-## 5. Quy ước đặt tên
+# 5. Quy ước đặt tên
 
-### 5.1 Class
+## 5.1 Class
 
-Sử dụng PascalCase.
+PascalCase.
 
 ```java
 TransactionController
 TransactionService
+TransactionServiceImpl
 TransactionRepository
 CreateTransactionRequest
 TransactionResponse
@@ -117,44 +139,49 @@ TransactionResponse
 
 ---
 
-### 5.2 Method
+## 5.2 Method
 
-Sử dụng camelCase.
+camelCase.
 
 ```java
-createTransaction()
-getTransactionById()
-findTransactions()
-calculateMonthlyExpense()
+create()
+update()
+delete()
+getById()
+getAll()
+generateAccessToken()
+findAvailableCategories()
 ```
 
-Tên method phải thể hiện rõ hành động.
+Tên method phải thể hiện hành động hoặc ý nghĩa.
 
 Không nên:
 
 ```java
 process()
 handle()
+execute()
 doSomething()
-executeData()
 ```
+
+trừ khi ngữ cảnh thực sự phù hợp.
 
 ---
 
-### 5.3 Biến
+## 5.3 Biến
 
-Sử dụng camelCase.
+camelCase.
 
 ```java
 currentUser
-totalIncome
 transactionDate
-remainingBudget
+passwordHash
+refreshToken
+categoryId
+totalExpense
 ```
 
-Không dùng tên quá ngắn, trừ biến lặp đơn giản.
-
-Không nên:
+Tránh:
 
 ```java
 u
@@ -166,106 +193,163 @@ data1
 
 ---
 
-### 5.4 Hằng số
+## 5.4 Hằng số
 
-Sử dụng chữ hoa và dấu gạch dưới.
+UPPER_SNAKE_CASE.
 
 ```java
-DEFAULT_PAGE_SIZE
-MAX_LOGIN_ATTEMPTS
-ACCESS_TOKEN_EXPIRE_SECONDS
+BEARER_PREFIX
+LOGIN_ATTEMPT_PREFIX
+REFRESH_TOKEN_BYTES
+TRACE_ID_KEY
 ```
 
 ---
 
-### 5.5 Boolean
+## 5.5 Boolean
 
-Tên biến Boolean nên bắt đầu bằng:
-
-- `is`
-- `has`
-- `can`
-- `should`
-
-Ví dụ:
+Ưu tiên tên thể hiện trạng thái.
 
 ```java
 isRead
-isDefault
-hasPermission
-canDelete
+isDeleted
+isActive
+isRevoked
+isEnabled
+isSystemDefault
+```
+
+Method kiểm tra có thể dùng:
+
+```java
+isOwnedBy()
+isActive()
+isExpired()
+isRevoked()
 ```
 
 ---
 
-## 6. Entity
+# 6. Entity
 
-### 6.1 Quy tắc chung
+## 6.1 Quy tắc chung
 
-- Tên Entity là danh từ số ít.
-- Tên bảng là danh từ số nhiều.
-- Không trả Entity trực tiếp ra API.
-- Quan hệ `@ManyToOne` mặc định dùng `FetchType.LAZY`.
-- Enum lưu bằng `EnumType.STRING`.
-- Tiền tệ dùng `BigDecimal`.
-- Không dùng `double` hoặc `float` cho tiền.
-- Không đặt validation của API trực tiếp lên Entity nếu không cần thiết.
+* Tên Entity số ít.
+* Tên bảng số nhiều.
+* Không trả Entity trực tiếp qua API.
+* Quan hệ `@ManyToOne` dùng `FetchType.LAZY`.
+* Enum dùng `EnumType.STRING`.
+* Tiền dùng `BigDecimal`.
+* Không dùng `double` hoặc `float` cho tiền.
+* Không đặt Jakarta Validation dành cho HTTP Request lên Entity nếu không cần.
+* Entity phải map đúng tên cột Flyway.
+* Không dùng `@Data`.
+* Không dùng `@ToString` toàn Entity có quan hệ JPA.
+* `equals()` và `hashCode()` phải được kiểm soát rõ ràng.
+* Constructor không tham số dành cho JPA nên dùng `protected`.
 
 ---
 
-### 6.2 Ví dụ Entity
+## 6.2 Ví dụ Entity
 
 ```java
 @Entity
 @Table(name = "transactions")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@EntityListeners(AuditingEntityListener.class)
 public class Transaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
+    @ManyToOne(
+            fetch = FetchType.LAZY,
+            optional = false
+    )
+    @JoinColumn(
+            name = "user_id",
+            nullable = false
+    )
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "category_id", nullable = false)
+    @ManyToOne(
+            fetch = FetchType.LAZY,
+            optional = false
+    )
+    @JoinColumn(
+            name = "category_id",
+            nullable = false
+    )
     private Category category;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(
+            name = "type",
+            nullable = false,
+            length = 20
+    )
     private TransactionType type;
 
-    @Column(nullable = false, precision = 15, scale = 2)
+    @Column(
+            name = "amount",
+            nullable = false,
+            precision = 15,
+            scale = 2
+    )
     private BigDecimal amount;
 
-    @Column(length = 500)
+    @Column(
+            name = "merchant",
+            length = 255
+    )
+    private String merchant;
+
+    @Column(
+            name = "payment_method",
+            length = 20
+    )
+    private String paymentMethod;
+
+    @Column(
+            name = "note",
+            length = 500
+    )
     private String note;
 
-    @Column(name = "transaction_date", nullable = false)
+    @Column(
+            name = "transaction_date",
+            nullable = false
+    )
     private LocalDate transactionDate;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @CreatedDate
+    @Column(
+            name = "created_at",
+            nullable = false,
+            updatable = false
+    )
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @LastModifiedDate
+    @Column(
+            name = "updated_at",
+            nullable = false
+    )
     private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    protected Transaction() {
+    }
 }
 ```
 
 ---
 
-### 6.3 Không dùng `@Data` bừa bãi
+## 6.3 Không dùng `@Data`
 
-Không khuyến nghị:
+Không dùng:
 
 ```java
 @Data
@@ -276,22 +360,18 @@ public class Transaction {
 
 Lý do:
 
-- `@Data` tự sinh `equals()` và `hashCode()`.
-- Có thể gây lỗi với quan hệ JPA.
-- Có thể tạo vòng lặp trong `toString()`.
-- Có thể vô tình log dữ liệu không cần thiết.
+* Sinh `equals()`.
+* Sinh `hashCode()`.
+* Sinh `toString()`.
+* Dễ truy cập quan hệ LAZY ngoài ý muốn.
+* Có thể tạo vòng lặp.
+* Có thể log dữ liệu không cần thiết.
 
-Ưu tiên:
-
-```java
-@Getter
-@Setter
-@NoArgsConstructor
-```
+Entity hiện tại ưu tiên getter/setter rõ ràng hoặc Lombok có chọn lọc nếu thực sự cần.
 
 ---
 
-### 6.4 Enum
+## 6.4 Enum
 
 ```java
 public enum TransactionType {
@@ -300,7 +380,7 @@ public enum TransactionType {
 }
 ```
 
-Entity phải map enum bằng:
+Map:
 
 ```java
 @Enumerated(EnumType.STRING)
@@ -312,768 +392,1109 @@ Không dùng:
 EnumType.ORDINAL
 ```
 
-vì thứ tự enum có thể thay đổi.
+---
+
+# 7. JPA Relationship
+
+## 7.1 Many-to-One
+
+Mặc định:
+
+```java
+@ManyToOne(fetch = FetchType.LAZY)
+```
+
+Không dùng `EAGER` nếu không có lý do rõ ràng.
+
+Ví dụ:
+
+```java
+@ManyToOne(
+        fetch = FetchType.LAZY,
+        optional = false
+)
+@JoinColumn(
+        name = "category_id",
+        nullable = false
+)
+private Category category;
+```
 
 ---
 
-## 7. DTO
+## 7.2 Quan hệ Category mặc định
 
-### 7.1 Phân loại DTO
-
-DTO được chia thành:
+Category mặc định dùng chung:
 
 ```text
-request
-response
+user_id = NULL
+is_default = true
+```
+
+Do đó:
+
+```java
+@ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "user_id")
+private User user;
+```
+
+không được khai báo:
+
+```java
+nullable = false
+```
+
+---
+
+# 8. Auditing
+
+Các Entity cần audit dùng:
+
+```java
+@EntityListeners(AuditingEntityListener.class)
+```
+
+và:
+
+```java
+@CreatedDate
+private LocalDateTime createdAt;
+
+@LastModifiedDate
+private LocalDateTime updatedAt;
+```
+
+`JpaAuditingConfig` chịu trách nhiệm bật:
+
+```java
+@EnableJpaAuditing
+```
+
+Không tự set `createdAt` hoặc `updatedAt` trong Service nếu Spring Auditing đã xử lý.
+
+---
+
+# 9. DTO
+
+## 9.1 Phân loại
+
+```text
+dto/
+├── request/
+└── response/
 ```
 
 Ví dụ:
 
 ```text
-CreateTransactionRequest
-UpdateTransactionRequest
-TransactionResponse
-```
+CreateCategoryRequest
+UpdateCategoryRequest
+CategoryResponse
 
-Không dùng một DTO chung cho mọi nghiệp vụ.
+RegisterRequest
+LoginRequest
+AuthResponse
+```
 
 ---
 
-### 7.2 Request DTO
+## 9.2 Request DTO
 
-Ưu tiên sử dụng `record` với Java 21.
+Ưu tiên Java 21 `record`.
 
 ```java
 public record CreateTransactionRequest(
 
-        @NotNull(message = "Danh mục không được để trống")
+        @NotNull(
+                message = "Category is required"
+        )
         Long categoryId,
 
-        @NotNull(message = "Loại giao dịch không được để trống")
+        @NotNull(
+                message = "Transaction type is required"
+        )
         TransactionType type,
 
-        @NotNull(message = "Số tiền không được để trống")
+        @NotNull(
+                message = "Amount is required"
+        )
         @DecimalMin(
                 value = "0.01",
-                message = "Số tiền phải lớn hơn 0"
+                message = "Amount must be greater than 0"
         )
         BigDecimal amount,
 
         @Size(
                 max = 500,
-                message = "Ghi chú không được vượt quá 500 ký tự"
+                message = "Note must not exceed 500 characters"
         )
         String note,
 
-        @NotNull(message = "Ngày giao dịch không được để trống")
+        @NotNull(
+                message = "Transaction date is required"
+        )
         @PastOrPresent(
-                message = "Ngày giao dịch không được ở tương lai"
+                message = "Transaction date must not be in the future"
         )
         LocalDate transactionDate
+
 ) {
 }
 ```
 
 ---
 
-### 7.3 Response DTO
+## 9.3 Response DTO
 
 ```java
 public record TransactionResponse(
+
         Long id,
+
         Long categoryId,
+
         String categoryName,
+
         TransactionType type,
+
         BigDecimal amount,
+
+        String merchant,
+
+        String paymentMethod,
+
         String note,
+
         LocalDate transactionDate,
+
         LocalDateTime createdAt,
+
         LocalDateTime updatedAt
+
 ) {
 }
 ```
 
 ---
 
-### 7.4 Quy tắc DTO
+## 9.4 Quy tắc DTO
 
-- Không có `userId` trong Request DTO.
-- Không trả `passwordHash`.
-- Không trả `tokenHash`.
-- Không trả Entity lồng nhau.
-- Chỉ trả dữ liệu Client thực sự cần.
-- Request và Response không dùng chung một class.
-- Validation đặt tại Request DTO.
-
----
-
-## 8. Controller
-
-### 8.1 Trách nhiệm
-
-Controller chỉ:
-
-- Nhận HTTP Request.
-- Validate DTO.
-- Lấy người dùng hiện tại.
-- Gọi Service.
-- Trả HTTP Response.
-
-Controller không:
-
-- Chứa business logic.
-- Gọi Repository.
-- Thực hiện query Database.
-- Tính toán số liệu.
-- Tự xử lý exception bằng `try-catch` nếu đã có Global Handler.
+* Request không có `userId`.
+* Request không có `isDefault` nếu client không được quyền thiết lập.
+* Không trả `passwordHash`.
+* Không trả `tokenHash`.
+* Không trả Entity lồng nhau.
+* Request và Response là class khác nhau.
+* Validation nằm tại Request.
+* Response chỉ chứa dữ liệu client cần.
 
 ---
 
-### 8.2 Ví dụ Controller
+# 10. Mapper
 
-```java
-@RestController
-@RequestMapping("/api/transactions")
-@RequiredArgsConstructor
-public class TransactionController {
-
-    private final TransactionService transactionService;
-
-    @PostMapping
-    public ResponseEntity<ApiResponse<TransactionResponse>> create(
-            @AuthenticationPrincipal UserPrincipal principal,
-            @Valid @RequestBody CreateTransactionRequest request
-    ) {
-        TransactionResponse response =
-                transactionService.create(principal.getId(), request);
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ApiResponse.success(
-                        "Tạo giao dịch thành công",
-                        response
-                ));
-    }
-}
-```
-
----
-
-### 8.3 Quy tắc Controller
-
-- Dùng `@RestController`.
-- Đặt base path bằng `@RequestMapping`.
-- Dùng constructor injection.
-- Dùng `@Valid` cho Request DTO.
-- Dùng `ResponseEntity` khi cần kiểm soát HTTP Status.
-- Không trả trực tiếp `Map<String, Object>`.
-- Không viết response thủ công lặp lại ở nhiều Controller.
-
----
-
-## 9. Service
-
-### 9.1 Trách nhiệm
-
-Service xử lý:
-
-- Business Rules.
-- Kiểm tra quyền sở hữu.
-- Gọi Repository.
-- Transaction boundary.
-- Cache.
-- Gọi dịch vụ ngoài.
-- Phối hợp nhiều module.
-
----
-
-### 9.2 Interface
-
-```java
-public interface TransactionService {
-
-    TransactionResponse create(
-            Long userId,
-            CreateTransactionRequest request
-    );
-
-    TransactionResponse getById(
-            Long userId,
-            Long transactionId
-    );
-
-    void softDelete(
-            Long userId,
-            Long transactionId
-    );
-}
-```
-
----
-
-### 9.3 Implementation
-
-```java
-@Service
-@RequiredArgsConstructor
-@Transactional(readOnly = true)
-public class TransactionServiceImpl implements TransactionService {
-
-    private final TransactionRepository transactionRepository;
-    private final CategoryRepository categoryRepository;
-    private final TransactionMapper transactionMapper;
-
-    @Override
-    @Transactional
-    public TransactionResponse create(
-            Long userId,
-            CreateTransactionRequest request
-    ) {
-        Category category = categoryRepository
-                .findAccessibleCategory(userId, request.categoryId())
-                .orElseThrow(() -> new AppException(
-                        ErrorCode.CATEGORY_NOT_FOUND
-                ));
-
-        validateCategoryType(category, request.type());
-
-        Transaction transaction =
-                transactionMapper.toEntity(request);
-
-        transaction.setCategory(category);
-
-        Transaction saved = transactionRepository.save(transaction);
-
-        return transactionMapper.toResponse(saved);
-    }
-}
-```
-
----
-
-### 9.4 Quy tắc Service
-
-- Class triển khai có hậu tố `Impl` nếu dùng interface.
-- Dùng `@Transactional(readOnly = true)` ở cấp class khi phần lớn method chỉ đọc.
-- Method ghi dữ liệu dùng `@Transactional`.
-- Không trả Entity ra Controller.
-- Không trả `Optional` từ Service ra Controller.
-- Không bắt `Exception` chung rồi bỏ qua lỗi.
-- Không sử dụng `null` để biểu diễn lỗi nghiệp vụ.
-- Dùng `AppException` và `ErrorCode`.
-
----
-
-## 10. Repository
-
-### 10.1 Quy tắc chung
-
-Repository sử dụng Spring Data JPA.
-
-```java
-public interface TransactionRepository
-        extends JpaRepository<Transaction, Long>,
-                JpaSpecificationExecutor<Transaction> {
-}
-```
-
-Repository chỉ xử lý:
-
-- CRUD.
-- Query.
-- Pagination.
-- Projection.
-- Specification.
-
-Không xử lý business logic.
-
----
-
-### 10.2 Tên Query Method
-
-```java
-Optional<Transaction> findByIdAndUserIdAndDeletedAtIsNull(
-        Long id,
-        Long userId
-);
-```
-
-Tên method phải rõ ràng.
-
-Nếu tên method quá dài, sử dụng:
-
-- `@Query`
-- Specification
-- Custom Repository
-
----
-
-### 10.3 Query tổng hợp
-
-```java
-@Query("""
-    select coalesce(sum(t.amount), 0)
-    from Transaction t
-    where t.user.id = :userId
-      and t.type = :type
-      and t.transactionDate between :fromDate and :toDate
-      and t.deletedAt is null
-""")
-BigDecimal calculateTotalAmount(
-        Long userId,
-        TransactionType type,
-        LocalDate fromDate,
-        LocalDate toDate
-);
-```
-
----
-
-### 10.4 Quy tắc Repository
-
-- Không dùng native query khi JPQL có thể đáp ứng.
-- Native query chỉ dùng cho truy vấn tổng hợp phức tạp hoặc tối ưu đặc biệt.
-- Query luôn lọc theo `userId` với dữ liệu cá nhân.
-- Query Transaction phải loại dữ liệu đã Soft Delete.
-- Không gọi Repository từ Controller.
-- Không dùng `findAll()` cho dữ liệu cá nhân mà thiếu điều kiện người dùng.
-
----
-
-## 11. Mapper
-
-Khuyến nghị sử dụng MapStruct.
+MapStruct dùng cho mapping cơ bản.
 
 ```java
 @Mapper(componentModel = "spring")
 public interface TransactionMapper {
 
-    Transaction toEntity(CreateTransactionRequest request);
-
-    @Mapping(
-            target = "categoryId",
-            source = "category.id"
-    )
-    @Mapping(
-            target = "categoryName",
-            source = "category.name"
-    )
-    TransactionResponse toResponse(Transaction transaction);
-}
-```
-
-### Quy tắc Mapper
-
-- Mapper chỉ chuyển đổi dữ liệu.
-- Không gọi Repository.
-- Không chứa business logic.
-- Không tự kiểm tra quyền.
-- Không thực hiện truy vấn Database.
-- Mapping đặc biệt phải được khai báo rõ ràng.
-
----
-
-## 12. Validation
-
-Validation được chia thành hai nhóm.
-
-### 12.1 Validation định dạng
-
-Thực hiện ở DTO:
-
-- Bắt buộc.
-- Độ dài.
-- Email.
-- Số tiền dương.
-- Ngày không ở tương lai.
-
-Ví dụ:
-
-```java
-@NotBlank
-@Email
-private String email;
-```
-
----
-
-### 12.2 Validation nghiệp vụ
-
-Thực hiện ở Service:
-
-- Email đã tồn tại.
-- Category thuộc người dùng.
-- Category đúng loại.
-- Budget bị trùng.
-- Transaction đã bị xóa.
-- Người dùng có quyền truy cập.
-
-Không cố đưa toàn bộ validation nghiệp vụ vào DTO.
-
----
-
-## 13. Exception Handling
-
-### 13.1 AppException
-
-```java
-public class AppException extends RuntimeException {
-
-    private final ErrorCode errorCode;
-
-    public AppException(ErrorCode errorCode) {
-        super(errorCode.getMessage());
-        this.errorCode = errorCode;
-    }
-
-    public ErrorCode getErrorCode() {
-        return errorCode;
-    }
-}
-```
-
----
-
-### 13.2 ErrorCode
-
-```java
-@Getter
-@RequiredArgsConstructor
-public enum ErrorCode {
-
-    TRANSACTION_NOT_FOUND(
-            HttpStatus.NOT_FOUND,
-            "TRANSACTION_NOT_FOUND",
-            "Không tìm thấy giao dịch"
-    ),
-
-    CATEGORY_NOT_FOUND(
-            HttpStatus.NOT_FOUND,
-            "CATEGORY_NOT_FOUND",
-            "Không tìm thấy danh mục"
+    TransactionResponse toResponse(
+            Transaction transaction
     );
-
-    private final HttpStatus status;
-    private final String code;
-    private final String message;
 }
+```
+
+Mapping phức tạp có thể khai báo rõ:
+
+```java
+@Mapping(
+        target = "categoryId",
+        source = "category.id"
+)
+@Mapping(
+        target = "categoryName",
+        source = "category.name"
+)
+TransactionResponse toResponse(
+        Transaction transaction
+);
+```
+
+## Quy tắc
+
+Mapper:
+
+* Không query database.
+* Không gọi Repository.
+* Không kiểm tra ownership.
+* Không chứa business rule.
+* Không mã hóa password.
+* Không sinh JWT.
+* Chỉ chịu trách nhiệm chuyển đổi dữ liệu.
+
+Ví dụ Authentication:
+
+```text
+AuthService
+→ PasswordEncoder
+
+UserMapper
+→ map DTO ↔ Entity
 ```
 
 ---
 
-### 13.3 GlobalExceptionHandler
+# 11. Controller
+
+## 11.1 Trách nhiệm
+
+Controller chỉ:
+
+* Nhận HTTP Request.
+* Deserialize JSON.
+* Validate Request DTO.
+* Đọc thông tin HTTP khi cần.
+* Gọi Service.
+* Trả HTTP Response.
+
+Controller không:
+
+* Gọi Repository.
+* Viết SQL.
+* Chứa business rule.
+* Kiểm tra ownership thủ công.
+* Hash password.
+* Sinh JWT.
+* Tính toán nghiệp vụ phức tạp.
+
+---
+
+## 11.2 Constructor Injection
+
+Dùng constructor injection.
 
 ```java
-@RestControllerAdvice
-public class GlobalExceptionHandler {
+@RestController
+@RequestMapping("/api/categories")
+public class CategoryController {
 
-    @ExceptionHandler(AppException.class)
-    public ResponseEntity<ApiErrorResponse> handleAppException(
-            AppException exception
+    private final CategoryService categoryService;
+
+    public CategoryController(
+            CategoryService categoryService
     ) {
-        ErrorCode errorCode = exception.getErrorCode();
-
-        ApiErrorResponse response = ApiErrorResponse.of(
-                errorCode.getCode(),
-                errorCode.getMessage()
-        );
-
-        return ResponseEntity
-                .status(errorCode.getStatus())
-                .body(response);
+        this.categoryService =
+                categoryService;
     }
-}
-```
-
----
-
-### 13.4 Quy tắc Exception
-
-- Không trả stack trace cho Client.
-- Không trả message kỹ thuật của Database.
-- Không dùng một mã lỗi chung cho mọi trường hợp.
-- Không dùng `RuntimeException` trực tiếp cho lỗi nghiệp vụ.
-- Mọi lỗi nghiệp vụ phải có `ErrorCode`.
-- Validation error phải chỉ rõ field bị lỗi.
-
----
-
-## 14. API Response
-
-### 14.1 Response thành công
-
-```java
-public record ApiResponse<T>(
-        boolean success,
-        String message,
-        T data,
-        LocalDateTime timestamp,
-        String traceId
-) {
-}
-```
-
-Ví dụ:
-
-```json
-{
-  "success": true,
-  "message": "Tạo giao dịch thành công",
-  "data": {},
-  "timestamp": "2026-07-28T20:30:00",
-  "traceId": "2d8f91a1"
-}
-```
-
----
-
-### 14.2 Response lỗi
-
-```json
-{
-  "success": false,
-  "message": "Không tìm thấy giao dịch",
-  "errorCode": "TRANSACTION_NOT_FOUND",
-  "errors": null,
-  "timestamp": "2026-07-28T20:30:00",
-  "traceId": "2d8f91a1"
-}
-```
-
----
-
-## 15. Logging
-
-Sử dụng:
-
-```java
-@Slf4j
-```
-
-Ví dụ:
-
-```java
-log.info(
-        "Created transaction. userId={}, transactionId={}",
-        userId,
-        transaction.getId()
-);
-```
-
-### Nên ghi log
-
-- Đăng nhập thành công hoặc thất bại.
-- Tạo giao dịch quan trọng.
-- Vượt ngân sách.
-- Gọi AI Provider.
-- AI Provider bị lỗi.
-- Exception ngoài dự kiến.
-
-### Không ghi log
-
-- Mật khẩu.
-- Access Token.
-- Refresh Token.
-- API Key.
-- Toàn bộ Prompt chứa dữ liệu nhạy cảm.
-- Thông tin cá nhân không cần thiết.
-
----
-
-### 15.1 Không nối chuỗi thủ công
-
-Không nên:
-
-```java
-log.info("User " + userId + " created transaction");
-```
-
-Nên:
-
-```java
-log.info(
-        "User created transaction. userId={}",
-        userId
-);
-```
-
----
-
-## 16. Transaction
-
-### 16.1 Nghiệp vụ ghi dữ liệu
-
-Method ghi dữ liệu sử dụng:
-
-```java
-@Transactional
-```
-
-Ví dụ:
-
-```java
-@Transactional
-public TransactionResponse create(...) {
-}
-```
-
----
-
-### 16.2 Nghiệp vụ chỉ đọc
-
-```java
-@Transactional(readOnly = true)
-```
-
----
-
-### 16.3 Không đặt Transaction ở Controller
-
-Không nên:
-
-```java
-@PostMapping
-@Transactional
-public ResponseEntity<?> create() {
-}
-```
-
-Transaction boundary phải nằm tại Service.
-
----
-
-### 16.4 Gọi API bên ngoài
-
-Không nên giữ Database Transaction mở quá lâu trong khi chờ AI Provider.
-
-Nên tách:
-
-1. Đọc dữ liệu.
-2. Tạo context.
-3. Gọi AI.
-4. Mở transaction ngắn để lưu kết quả.
-
----
-
-## 17. Xử lý tiền tệ
-
-Mọi dữ liệu tiền sử dụng:
-
-```java
-BigDecimal
-```
-
-Ví dụ:
-
-```java
-BigDecimal totalExpense =
-        transactions.stream()
-                .map(Transaction::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-```
-
-So sánh:
-
-```java
-if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-    throw new AppException(
-            ErrorCode.TRANSACTION_INVALID_AMOUNT
-    );
 }
 ```
 
 Không dùng:
 
 ```java
-amount > 0
+@Autowired
+private CategoryService categoryService;
 ```
 
-với `BigDecimal`.
-
 ---
 
-## 18. Ngày và giờ
-
-| Dữ liệu | Kiểu Java |
-|---|---|
-| Ngày giao dịch | `LocalDate` |
-| Tháng ngân sách | `YearMonth` tại DTO/Service |
-| Thời điểm tạo | `LocalDateTime` |
-| Thời điểm hết hạn token | `LocalDateTime` hoặc `Instant` |
-
-Khuyến nghị:
-
-- Dùng `LocalDate` cho ngày thu chi.
-- Dùng `Instant` cho token nếu hệ thống cần chuẩn hóa UTC.
-- Không dùng `java.util.Date`.
-- Không tự lưu ngày dưới dạng `String`.
-
----
-
-## 19. Optional
-
-Repository có thể trả:
+## 11.3 Ví dụ
 
 ```java
-Optional<Transaction>
-```
+@PostMapping
+public ResponseEntity<CategoryResponse> create(
+        @Valid
+        @RequestBody
+        CreateCategoryRequest request
+) {
+    CategoryResponse response =
+            categoryService.create(request);
 
-Service không nên trả `Optional` ra Controller.
-
-Nên xử lý ngay:
-
-```java
-Transaction transaction = repository
-        .findByIdAndUserIdAndDeletedAtIsNull(id, userId)
-        .orElseThrow(() -> new AppException(
-                ErrorCode.TRANSACTION_NOT_FOUND
-        ));
+    return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(response);
+}
 ```
 
 ---
 
-## 20. Null
+# 12. Security Context
 
-- Hạn chế trả `null`.
-- Collection rỗng phải trả `List.of()` hoặc danh sách rỗng.
-- Không trả `null` thay cho danh sách.
-- Dùng `Optional` tại tầng Repository khi phù hợp.
-- Không lạm dụng `Optional` làm field trong Entity hoặc DTO.
-
----
-
-## 21. Comment
-
-Chỉ comment khi cần giải thích **lý do**, không comment điều code đã thể hiện rõ.
+SmartSpend không nhận `userId` từ Request.
 
 Không nên:
 
 ```java
-// Lấy user theo id
-User user = userRepository.findById(id);
+public record CreateTransactionRequest(
+        Long userId,
+        Long categoryId
+) {
+}
+```
+
+Không nên để client gửi:
+
+```json
+{
+  "userId": 10
+}
+```
+
+User hiện tại lấy từ Spring Security:
+
+```java
+Authentication authentication =
+        SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+```
+
+Sau đó:
+
+```java
+UserPrincipal principal =
+        (UserPrincipal)
+                authentication.getPrincipal();
+
+Long userId = principal.getId();
+```
+
+Service chịu trách nhiệm lấy current user khi cần.
+
+---
+
+# 13. Service
+
+## 13.1 Trách nhiệm
+
+Service xử lý:
+
+* Business Rule.
+* Ownership.
+* Transaction boundary.
+* Repository coordination.
+* Password hashing.
+* JWT coordination.
+* Refresh Token rotation.
+* Redis rate limit.
+* Cache invalidation.
+* External service coordination.
+
+---
+
+## 13.2 Interface
+
+Ví dụ:
+
+```java
+public interface CategoryService {
+
+    List<CategoryResponse> getAll(
+            CategoryType type
+    );
+
+    CategoryResponse getById(
+            Long categoryId
+    );
+
+    CategoryResponse create(
+            CreateCategoryRequest request
+    );
+
+    CategoryResponse update(
+            Long categoryId,
+            UpdateCategoryRequest request
+    );
+
+    void delete(
+            Long categoryId
+    );
+}
+```
+
+Không truyền `userId` từ Controller nếu Service có thể lấy từ Security Context.
+
+---
+
+## 13.3 Implementation
+
+```java
+@Service
+public class CategoryServiceImpl
+        implements CategoryService {
+
+    private final CategoryRepository categoryRepository;
+    private final UserRepository userRepository;
+    private final CategoryMapper categoryMapper;
+
+    public CategoryServiceImpl(
+            CategoryRepository categoryRepository,
+            UserRepository userRepository,
+            CategoryMapper categoryMapper
+    ) {
+        this.categoryRepository =
+                categoryRepository;
+
+        this.userRepository =
+                userRepository;
+
+        this.categoryMapper =
+                categoryMapper;
+    }
+}
+```
+
+---
+
+## 13.4 Transaction Boundary
+
+Method chỉ đọc:
+
+```java
+@Transactional(readOnly = true)
+```
+
+Method ghi:
+
+```java
+@Transactional
+```
+
+Ví dụ:
+
+```java
+@Override
+@Transactional
+public CategoryResponse create(
+        CreateCategoryRequest request
+) {
+}
+```
+
+---
+
+## 13.5 Quy tắc Service
+
+* Không trả Entity ra Controller.
+* Không trả `Optional`.
+* Không dùng `null` làm business error.
+* Dùng `AppException`.
+* Dùng `ErrorCode`.
+* Ownership được kiểm tra trước update/delete.
+* Không giữ DB transaction lâu khi gọi API ngoài.
+
+---
+
+# 14. Repository
+
+Repository dùng Spring Data JPA.
+
+```java
+public interface TransactionRepository
+        extends JpaRepository<Transaction, Long>,
+        JpaSpecificationExecutor<Transaction> {
+}
+```
+
+Repository chịu trách nhiệm:
+
+* CRUD.
+* Query.
+* Pagination.
+* Projection.
+* Specification.
+
+Repository không chịu trách nhiệm:
+
+* Business Rule.
+* HTTP.
+* Security response.
+* Mapping API DTO.
+
+---
+
+## 14.1 Query Method
+
+```java
+Optional<Transaction>
+findByIdAndUserIdAndDeletedAtIsNull(
+        Long transactionId,
+        Long userId
+);
+```
+
+Tên method phải rõ ràng.
+
+Nếu quá dài:
+
+* `@Query`.
+* Specification.
+* Custom Repository.
+
+---
+
+## 14.2 Query Ownership
+
+Dữ liệu cá nhân phải lọc theo User.
+
+Không dùng:
+
+```java
+findById(id)
+```
+
+nếu nghiệp vụ yêu cầu ownership.
+
+Ưu tiên:
+
+```java
+findByIdAndUserIdAndDeletedAtIsNull(
+        id,
+        userId
+)
+```
+
+---
+
+# 15. Specification
+
+Transaction có nhiều filter nên sử dụng Specification.
+
+```java
+public final class TransactionSpecifications {
+
+    private TransactionSpecifications() {
+    }
+}
+```
+
+Mỗi Specification đại diện cho một điều kiện:
+
+```text
+belongsToUser
+notDeleted
+hasType
+hasCategory
+transactionDateFrom
+transactionDateTo
+containsKeyword
+```
+
+Ví dụ:
+
+```java
+public static Specification<Transaction>
+hasType(TransactionType type) {
+
+    if (type == null) {
+        return null;
+    }
+
+    return (root, query, criteriaBuilder) ->
+            criteriaBuilder.equal(
+                    root.get("type"),
+                    type
+            );
+}
+```
+
+Sau đó ghép:
+
+```java
+Specification<Transaction> specification =
+        TransactionSpecifications.filter(
+                userId,
+                type,
+                categoryId,
+                fromDate,
+                toDate,
+                keyword
+        );
+```
+
+và:
+
+```java
+transactionRepository.findAll(
+        specification,
+        pageable
+);
+```
+
+## Quy tắc
+
+* Specification chỉ xây query.
+* Không chứa business rule.
+* Luôn có điều kiện ownership.
+* Transaction query phải có `notDeleted()`.
+* Filter `null` không thêm điều kiện.
+
+---
+
+# 16. Soft Delete
+
+Transaction không xóa vật lý.
+
+Entity:
+
+```java
+@Column(name = "deleted_at")
+private LocalDateTime deletedAt;
+```
+
+Method:
+
+```java
+public void softDelete() {
+    this.deletedAt =
+            LocalDateTime.now();
+}
+```
+
+Service:
+
+```java
+transaction.softDelete();
+
+transactionRepository.save(
+        transaction
+);
+```
+
+Không dùng:
+
+```java
+transactionRepository.delete(transaction);
+```
+
+cho Transaction.
+
+Query phải loại:
+
+```text
+deleted_at IS NOT NULL
+```
+
+bằng điều kiện:
+
+```text
+deleted_at IS NULL
+```
+
+---
+
+# 17. Validation
+
+Validation chia 2 loại.
+
+## 17.1 Validation định dạng
+
+Đặt tại Request DTO.
+
+Ví dụ:
+
+```java
+@NotBlank
+@Email
+String email
+```
+
+hoặc:
+
+```java
+@DecimalMin("0.01")
+BigDecimal amount
+```
+
+---
+
+## 17.2 Validation nghiệp vụ
+
+Đặt tại Service.
+
+Ví dụ:
+
+* Email đã tồn tại.
+* Category tồn tại.
+* Category thuộc user.
+* Category là mặc định.
+* Transaction Type khớp Category Type.
+* Budget trùng tháng.
+* Refresh Token còn hiệu lực.
+* Transaction có quyền truy cập.
+
+Không cố đưa business validation vào DTO.
+
+---
+
+# 18. Exception Handling
+
+## 18.1 AppException
+
+Business error:
+
+```java
+throw new AppException(
+        ErrorCode.CATEGORY_NOT_FOUND
+);
+```
+
+Không dùng:
+
+```java
+throw new RuntimeException(
+        "Category not found"
+);
+```
+
+---
+
+## 18.2 ErrorCode
+
+Mỗi lỗi quan trọng có mã riêng.
+
+Ví dụ:
+
+```java
+CATEGORY_NOT_FOUND(
+        HttpStatus.NOT_FOUND,
+        "CATEGORY_NOT_FOUND",
+        "Không tìm thấy danh mục"
+),
+
+CATEGORY_ALREADY_EXISTS(
+        HttpStatus.CONFLICT,
+        "CATEGORY_ALREADY_EXISTS",
+        "Danh mục đã tồn tại"
+),
+
+AUTH_INVALID_CREDENTIALS(
+        HttpStatus.UNAUTHORIZED,
+        "AUTH_INVALID_CREDENTIALS",
+        "Email hoặc mật khẩu không chính xác"
+);
+```
+
+---
+
+## 18.3 Quy tắc
+
+* Không trả stack trace.
+* Không trả SQL error.
+* Không dùng một ErrorCode chung cho mọi nghiệp vụ.
+* Validation error chỉ rõ field.
+* HTTP Status phải phù hợp.
+
+---
+
+# 19. Authentication
+
+## 19.1 Password
+
+Password chỉ tồn tại dạng plaintext ở Request ngắn hạn.
+
+Service:
+
+```java
+String passwordHash =
+        passwordEncoder.encode(
+                request.password()
+        );
+```
+
+Database chỉ lưu:
+
+```text
+password_hash
+```
+
+Không log password.
+
+---
+
+## 19.2 Refresh Token
+
+Raw Refresh Token:
+
+```text
+Client
+```
+
+Database chỉ lưu:
+
+```text
+SHA-256(rawRefreshToken)
+```
+
+Không lưu raw token.
+
+---
+
+## 19.3 JWT
+
+Access Token:
+
+```text
+Bearer JWT
+```
+
+JWT chứa tối thiểu:
+
+```text
+sub
+email
+role
+iat
+exp
+```
+
+Không chứa:
+
+```text
+password
+passwordHash
+refreshToken
+```
+
+---
+
+## 19.4 Stateless
+
+Security sử dụng:
+
+```java
+SessionCreationPolicy.STATELESS
+```
+
+Không dùng HTTP Session để lưu Authentication.
+
+---
+
+# 20. Redis
+
+Redis là thành phần hỗ trợ.
+
+Dùng cho:
+
+```text
+Rate Limit
+Cache
+TTL Data
+```
+
+Không dùng Redis làm nguồn dữ liệu chính.
+
+Ví dụ Login Rate Limit:
+
+```text
+auth:login-attempt:<email>
+```
+
+Nếu Redis lỗi, nghiệp vụ có thể áp dụng fallback tùy trường hợp.
+
+Không để Redis lỗi làm crash toàn bộ ứng dụng nếu Redis chỉ là lớp bảo vệ bổ sung.
+
+---
+
+# 21. API Response
+
+SmartSpend hướng tới response thống nhất bằng `ApiResponse`.
+
+Không trả:
+
+```java
+Map<String, Object>
+```
+
+thủ công ở nhiều Controller.
+
+Không trả Entity.
+
+Response lỗi phải có:
+
+```text
+success
+message
+errorCode
+timestamp
+traceId
+```
+
+Response thành công nên có:
+
+```text
+success
+message
+data
+timestamp
+traceId
+```
+
+---
+
+# 22. Trace ID
+
+Mỗi Request có Trace ID.
+
+Header:
+
+```text
+X-Trace-Id
+```
+
+Trace ID được đưa vào MDC.
+
+Không tự tạo Trace ID riêng ở từng Controller.
+
+---
+
+# 23. Logging
+
+Dùng SLF4J.
+
+```java
+private static final Logger log =
+        LoggerFactory.getLogger(
+                AuthServiceImpl.class
+        );
+```
+
+Hoặc Lombok `@Slf4j` nếu module thống nhất sử dụng.
+
+Nên log:
+
+* Login thất bại.
+* Login rate limit.
+* Business event quan trọng.
+* Redis lỗi.
+* AI Provider lỗi.
+* Unexpected system error.
+
+Không log:
+
+* Password.
+* Access Token.
+* Refresh Token.
+* Token Hash.
+* API Key.
+* Secret.
+* Prompt chứa dữ liệu nhạy cảm.
+
+---
+
+## 23.1 Structured Logging
+
+Không:
+
+```java
+log.info(
+        "User " + userId + " logged in"
+);
 ```
 
 Nên:
 
 ```java
-// Refresh token is rotated to prevent reuse after it has been exchanged.
-revokeCurrentToken(token);
+log.info(
+        "User logged in. userId={}",
+        userId
+);
 ```
-
-JavaDoc nên dùng cho:
-
-- Public service interface.
-- Utility phức tạp.
-- Thuật toán hoặc business rule khó hiểu.
-- Client tích hợp bên ngoài.
 
 ---
 
-## 22. Import
+# 24. Tiền tệ
 
-Không dùng wildcard import.
+Dùng:
 
-Không nên:
+```java
+BigDecimal
+```
+
+Không:
+
+```java
+double
+float
+```
+
+So sánh:
+
+```java
+if (
+        amount.compareTo(
+                BigDecimal.ZERO
+        ) <= 0
+) {
+}
+```
+
+Không:
+
+```java
+amount > 0
+```
+
+---
+
+# 25. Ngày giờ
+
+| Dữ liệu                  | Java            |
+| ------------------------ | --------------- |
+| Transaction Date         | `LocalDate`     |
+| Created / Updated        | `LocalDateTime` |
+| Deleted At               | `LocalDateTime` |
+| Refresh Token expiration | `LocalDateTime` |
+| JWT internal timestamp   | `Instant`       |
+
+Không lưu ngày bằng String.
+
+---
+
+# 26. Optional
+
+Repository có thể trả:
+
+```java
+Optional<Category>
+```
+
+Service xử lý ngay:
+
+```java
+Category category =
+        categoryRepository
+                .findAccessibleById(
+                        categoryId,
+                        userId
+                )
+                .orElseThrow(() ->
+                        new AppException(
+                                ErrorCode.CATEGORY_NOT_FOUND
+                        )
+                );
+```
+
+Service không trả Optional ra Controller.
+
+---
+
+# 27. Null
+
+* Không trả `null` cho Collection.
+* Dùng danh sách rỗng.
+* Không dùng `Optional` làm field Entity.
+* Optional filter có thể dùng `null` trong Specification để bỏ điều kiện.
+* Business error không biểu diễn bằng `null`.
+
+---
+
+# 28. Import
+
+Không dùng wildcard.
+
+Không:
 
 ```java
 import java.util.*;
@@ -1086,82 +1507,90 @@ import java.util.List;
 import java.util.Optional;
 ```
 
-Xóa import không sử dụng trước khi commit.
+Xóa import thừa.
 
 ---
 
-## 23. Dependency Injection
+# 29. Comment
 
-Ưu tiên Constructor Injection.
+Comment giải thích **vì sao**, không giải thích điều hiển nhiên.
 
-```java
-@Service
-@RequiredArgsConstructor
-public class BudgetServiceImpl {
-
-    private final BudgetRepository budgetRepository;
-}
-```
-
-Không dùng Field Injection:
+Không:
 
 ```java
-@Autowired
-private BudgetRepository budgetRepository;
+// Save user
+userRepository.save(user);
 ```
+
+Có thể:
+
+```java
+// Redis rate limiting is auxiliary;
+// authentication remains available if Redis is temporarily unavailable.
+```
+
+JavaDoc dùng cho:
+
+* Public API phức tạp.
+* Business rule khó hiểu.
+* Utility phức tạp.
+* External client.
 
 ---
 
-## 24. Configuration
+# 30. Configuration
 
-Không hard-code cấu hình.
+Không hard-code secret.
 
-Không nên:
+Không:
 
 ```java
-String apiKey = "sk-...";
+String secret = "abc123";
 ```
 
-Nên dùng biến môi trường:
+Dùng:
 
 ```yaml
-ai:
-  api-key: ${AI_API_KEY}
+app:
+  jwt:
+    secret: ${JWT_SECRET}
 ```
 
-Map cấu hình bằng:
+Production secret lấy từ environment.
 
-```java
-@ConfigurationProperties(prefix = "ai")
+Test có thể dùng secret giả cố định trong:
+
+```text
+application-test.yml
 ```
 
 Không commit:
 
-- API Key.
-- JWT Secret.
-- Database Password.
-- File `.env` thật.
+```text
+.env
+JWT secret thật
+Database password thật
+AI API key
+```
 
 ---
 
-## 25. Flyway Migration
+# 31. Flyway Migration
 
-Tên file:
+Tên:
 
 ```text
 V1__create_initial_schema.sql
 V2__insert_default_categories.sql
-V3__add_transaction_indexes.sql
+V3__description.sql
 ```
 
 Quy tắc:
 
-- Không sửa migration đã chạy trên môi trường chung.
-- Khi thay đổi schema, tạo migration mới.
-- Tên migration phải thể hiện rõ nội dung.
-- Không dùng Hibernate tự động sửa schema trong Production.
-
-Production:
+* Không sửa migration đã được dùng chung.
+* Thay đổi schema → migration mới.
+* Migration name mô tả nội dung.
+* Hibernate chỉ validate schema.
 
 ```yaml
 spring:
@@ -1172,61 +1601,142 @@ spring:
 
 ---
 
-## 26. Kiểm thử
+# 32. Test
 
-### 26.1 Tên method test
+## 32.1 Unit Test
 
-```java
-createTransaction_shouldReturnResponse_whenRequestIsValid()
-```
-
-Hoặc:
+Test Service bằng Mockito.
 
 ```java
-shouldCreateTransactionWhenRequestIsValid()
+@ExtendWith(MockitoExtension.class)
+class CategoryServiceImplTest {
+}
 ```
 
-Chọn một cách và dùng thống nhất.
+Không khởi động Spring nếu không cần.
 
 ---
 
-### 26.2 Cấu trúc Given – When – Then
+## 32.2 Controller Integration Test
+
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+class CategoryControllerIntegrationTest {
+}
+```
+
+Controller test có thể mock Service:
+
+```java
+@MockitoBean
+private CategoryService categoryService;
+```
+
+---
+
+## 32.3 Test Profile
+
+Integration Test phải dùng:
+
+```java
+@ActiveProfiles("test")
+```
+
+Không vô tình dùng dev profile.
+
+---
+
+## 32.4 Given – When – Then
 
 ```java
 @Test
-void shouldCreateTransactionWhenRequestIsValid() {
+void create_shouldSavePersonalCategory() {
+
     // Given
-    CreateTransactionRequest request = createValidRequest();
 
     // When
-    TransactionResponse response =
-            transactionService.create(USER_ID, request);
 
     // Then
-    assertThat(response).isNotNull();
-    assertThat(response.amount()).isEqualByComparingTo("150000");
 }
 ```
 
 ---
 
-### 26.3 Nội dung cần kiểm thử
+## 32.5 Naming
 
-- Luồng thành công.
-- Validation.
-- Không tìm thấy dữ liệu.
-- Truy cập dữ liệu người khác.
-- Business Rule.
-- Soft Delete.
-- Query tổng hợp.
-- AI Provider lỗi.
-- Refresh Token hết hạn.
+Project hiện ưu tiên:
+
+```text
+method_shouldExpectedResult_whenCondition
+```
+
+Ví dụ:
+
+```java
+register_shouldCreateUser_whenEmailDoesNotExist()
+
+delete_shouldRejectDefaultCategory()
+
+getAll_shouldFilterByType()
+```
+
+Giữ cùng phong cách trong module.
 
 ---
 
-## 27. Git Commit Convention
+# 33. Test Data
 
-Cấu trúc:
+Entity tạo thủ công trong Unit Test thường chưa có ID vì chưa đi qua database.
+
+Nếu cần ID:
+
+```java
+ReflectionTestUtils.setField(
+        user,
+        "id",
+        1L
+);
+```
+
+Không sửa Entity chỉ để phục vụ Unit Test.
+
+---
+
+# 34. Mockito
+
+Mockito dùng strict stubbing mặc định.
+
+Không thêm stub mà code không sử dụng.
+
+Nếu gặp:
+
+```text
+UnnecessaryStubbingException
+```
+
+ưu tiên sửa test data hoặc logic stub.
+
+Không dùng `lenient()` chỉ để che lỗi nếu chưa xác định nguyên nhân.
+
+---
+
+# 35. Postman
+
+Mỗi API sau khi code xong cần:
+
+1. Chạy Backend.
+2. Test bằng Postman.
+3. Kiểm tra HTTP status.
+4. Kiểm tra JSON.
+5. Kiểm tra Authentication.
+6. Kiểm tra Trace ID.
+7. Lưu request vào Collection.
+
+---
+
+# 36. Git Commit Convention
 
 ```text
 <type>(<scope>): <description>
@@ -1235,94 +1745,152 @@ Cấu trúc:
 Ví dụ:
 
 ```text
-feat(transaction): add create transaction API
+feat(auth): add JWT authentication
 
-fix(budget): prevent duplicate monthly budget
+feat(category): add category CRUD
 
-refactor(auth): simplify refresh token rotation
+feat(transaction): add transaction specification
+
+fix(config): fix RedisTemplate bean
 
 test(category): add category service tests
 
-docs(api): update transaction endpoints
+docs(roadmap): update transaction progress
 ```
 
-Các loại thường dùng:
+Type:
 
-| Type | Ý nghĩa |
-|---|---|
-| `feat` | Tính năng mới |
-| `fix` | Sửa lỗi |
-| `refactor` | Cải tiến code |
-| `test` | Thêm hoặc sửa test |
-| `docs` | Cập nhật tài liệu |
-| `chore` | Cấu hình, dependency |
-| `perf` | Cải thiện hiệu năng |
-
----
-
-## 28. Checklist trước khi tạo Pull Request
-
-### Kiến trúc
-
-- [ ] Code nằm đúng module.
-- [ ] Controller không gọi Repository.
-- [ ] Business logic nằm tại Service.
-- [ ] Không trả Entity trực tiếp.
-
-### Bảo mật
-
-- [ ] `userId` lấy từ SecurityContext.
-- [ ] Đã kiểm tra quyền sở hữu dữ liệu.
-- [ ] Không log thông tin nhạy cảm.
-- [ ] Không hard-code secret.
-
-### Dữ liệu
-
-- [ ] Tiền sử dụng `BigDecimal`.
-- [ ] Enum lưu bằng `STRING`.
-- [ ] Query Transaction lọc Soft Delete.
-- [ ] Query dữ liệu cá nhân có điều kiện `userId`.
-
-### API
-
-- [ ] Request DTO có validation.
-- [ ] HTTP Status phù hợp.
-- [ ] Response theo format chung.
-- [ ] Error Code rõ ràng.
-- [ ] Swagger được cập nhật.
-
-### Kiểm thử
-
-- [ ] Có test cho luồng thành công.
-- [ ] Có test cho trường hợp lỗi.
-- [ ] Có test quyền sở hữu nếu cần.
-- [ ] Tất cả test đều chạy thành công.
-
-### Mã nguồn
-
-- [ ] Không có import thừa.
-- [ ] Không có code bị comment nhưng không sử dụng.
-- [ ] Không có tên biến khó hiểu.
-- [ ] Không có logic lặp lại không cần thiết.
-- [ ] Code đã được format.
+| Type       | Ý nghĩa   |
+| ---------- | --------- |
+| `feat`     | Tính năng |
+| `fix`      | Sửa lỗi   |
+| `refactor` | Cải tiến  |
+| `test`     | Test      |
+| `docs`     | Tài liệu  |
+| `chore`    | Cấu hình  |
+| `perf`     | Hiệu năng |
 
 ---
 
-## 29. Tổng kết
+# 37. Checklist trước Pull Request
 
-SmartSpend sử dụng các quy ước lập trình nhằm đảm bảo mã nguồn rõ ràng, nhất quán và dễ bảo trì.
+## Architecture
 
-Những nguyên tắc quan trọng nhất gồm:
+* [ ] File đúng module.
+* [ ] Controller không gọi Repository.
+* [ ] Business logic nằm ở Service.
+* [ ] Không trả Entity.
+* [ ] Mapper không chứa business logic.
 
-1. Tổ chức package theo Feature.
+## Security
+
+* [ ] `userId` lấy từ Security Context.
+* [ ] Ownership đã được kiểm tra.
+* [ ] Không log dữ liệu nhạy cảm.
+* [ ] Không hard-code secret.
+* [ ] Endpoint cần auth không bị `permitAll`.
+
+## Database
+
+* [ ] Entity khớp Flyway.
+* [ ] Money dùng `BigDecimal`.
+* [ ] Enum dùng STRING.
+* [ ] Quan hệ dùng LAZY.
+* [ ] Transaction query lọc Soft Delete.
+* [ ] Query dữ liệu cá nhân lọc User.
+
+## API
+
+* [ ] DTO có validation.
+* [ ] Không nhận `userId`.
+* [ ] HTTP Status phù hợp.
+* [ ] ErrorCode phù hợp.
+* [ ] Swagger được cập nhật.
+* [ ] Postman đã test.
+
+## Test
+
+* [ ] Unit Test.
+* [ ] Integration Test khi cần.
+* [ ] Ownership test.
+* [ ] Business Rule test.
+* [ ] Test profile đúng.
+* [ ] `mvn clean test` thành công.
+
+## Code
+
+* [ ] Không wildcard import.
+* [ ] Không import thừa.
+* [ ] Không dead code.
+* [ ] Không tên biến khó hiểu.
+* [ ] Không duplicate logic rõ ràng.
+* [ ] Code format thống nhất.
+
+---
+
+# 38. Definition of Done cho code
+
+Một nhóm code chỉ được xem là hoàn thành khi:
+
+```text
+Compile
+↓
+Unit Test
+↓
+Integration Test nếu cần
+↓
+Run Backend
+↓
+Postman
+↓
+Review
+↓
+Update Documentation
+↓
+Git Commit
+```
+
+Lệnh kiểm tra cuối:
+
+```powershell
+.\mvnw.cmd clean test
+```
+
+phải trả:
+
+```text
+BUILD SUCCESS
+```
+
+---
+
+# 39. Tổng kết
+
+Các nguyên tắc quan trọng nhất của SmartSpend:
+
+1. Package by Feature.
 2. Controller chỉ xử lý HTTP.
-3. Service chứa Business Logic.
+3. Service chứa business logic.
 4. Repository chỉ truy cập dữ liệu.
-5. Không trả Entity qua API.
-6. Dùng `BigDecimal` cho tiền.
-7. Lấy `userId` từ SecurityContext.
-8. Kiểm tra quyền sở hữu dữ liệu.
-9. Chuẩn hóa Exception và Response.
-10. Không lưu hoặc ghi log dữ liệu nhạy cảm.
+5. DTO dùng `record`.
+6. Không trả Entity qua API.
+7. Không nhận `userId` từ Request.
+8. Lấy current user từ Security Context.
+9. Kiểm tra ownership.
+10. Quan hệ JPA dùng LAZY.
+11. Không dùng `@Data` cho Entity.
+12. Money dùng `BigDecimal`.
+13. Enum dùng STRING.
+14. Transaction dùng Soft Delete.
+15. Transaction filter dùng Specification.
+16. Password chỉ lưu hash.
+17. Refresh Token chỉ lưu hash.
+18. JWT Stateless.
+19. Redis chỉ là lớp hỗ trợ.
+20. Flyway quản lý schema.
+21. Test dùng profile `test`.
+22. Không hard-code secret.
+23. Không log dữ liệu nhạy cảm.
+24. `mvn clean test` phải thành công trước khi hoàn thành task.
 
-Tất cả mã nguồn mới cần tuân thủ tài liệu này trước khi được tích hợp vào dự án.
+Tất cả mã nguồn mới phải bám theo tài liệu này để giữ dự án SmartSpend nhất quán trong suốt quá trình phát triển.

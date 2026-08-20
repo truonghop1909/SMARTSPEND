@@ -1,1183 +1,1453 @@
-# Lộ trình phát triển
+# Cập nhật Roadmap — Local AI Financial Assistant
 
-## SmartSpend
+## 1. Thay đổi định hướng AI
 
-### AI Personal Finance Manager
+SmartSpend sử dụng AI chạy local.
 
----
+Mục tiêu:
 
-## 1. Giới thiệu
+* Không phụ thuộc OpenAI API hoặc Gemini API.
+* Không cần API Key cho LLM.
+* Dữ liệu tài chính không cần gửi tới AI Provider bên ngoài.
+* Model AI chạy trực tiếp trên máy phát triển.
+* Spring Boot giao tiếp với AI thông qua Local HTTP API.
+* AI chỉ được đọc và phân tích dữ liệu.
+* AI không được trực tiếp sửa Transaction hoặc Budget.
 
-### 1.1 Mục đích
-
-Tài liệu này mô tả lộ trình phát triển dự án **SmartSpend** từ giai đoạn chuẩn bị đến khi hoàn thiện phiên bản đầu tiên.
-
-Mục tiêu của lộ trình là:
-
-- Chia dự án thành các giai đoạn rõ ràng.
-- Xác định thứ tự phát triển hợp lý.
-- Theo dõi tiến độ.
-- Hạn chế việc làm nhiều chức năng cùng lúc.
-- Ưu tiên hoàn thành các module cốt lõi trước.
-- Đảm bảo dự án đủ chất lượng để đưa vào CV và GitHub Portfolio.
-
----
-
-## 1.2 Phạm vi phiên bản đầu tiên
-
-Phiên bản đầu tiên tập trung vào các chức năng:
-
-- Đăng ký và đăng nhập.
-- Quản lý danh mục.
-- Quản lý thu nhập và chi tiêu.
-- Quản lý ngân sách.
-- Dashboard thống kê.
-- Thông báo.
-- AI Financial Assistant.
-- Xuất báo cáo CSV và Excel.
-- Docker hóa môi trường phát triển.
-- Kiểm thử các luồng quan trọng.
-
-Phiên bản đầu không bao gồm:
-
-- Ví điện tử.
-- Chuyển tiền.
-- Thanh toán trực tuyến.
-- Liên kết tài khoản ngân hàng.
-- OCR hóa đơn.
-- Ứng dụng di động.
-- Microservices.
-- Hệ thống phân quyền nhiều vai trò.
-
----
-
-## 2. Nguyên tắc phát triển
-
-Dự án được phát triển theo các nguyên tắc sau:
-
-1. Hoàn thành từng module trước khi chuyển sang module tiếp theo.
-2. Ưu tiên chức năng cốt lõi trước tính năng mở rộng.
-3. Mỗi module phải có kiểm thử cơ bản.
-4. Mọi thay đổi Database phải thực hiện qua Flyway.
-5. Mọi API mới phải được cập nhật Swagger.
-6. Không thêm tính năng ngoài phạm vi khi phiên bản đầu chưa hoàn thành.
-7. Luôn giữ project ở trạng thái có thể chạy được.
-8. Mỗi giai đoạn phải có tiêu chí hoàn thành rõ ràng.
-
----
-
-## 3. Tổng quan các giai đoạn
-
-| Giai đoạn | Nội dung chính | Kết quả |
-|---:|---|---|
-| 0 | Chuẩn bị và thiết kế | Bộ tài liệu và cấu trúc dự án |
-| 1 | Khởi tạo nền tảng | Project chạy với MySQL, Redis và Swagger |
-| 2 | Authentication | Đăng ký, đăng nhập, JWT |
-| 3 | Category | Quản lý danh mục |
-| 4 | Transaction | Quản lý thu và chi |
-| 5 | Budget và Notification | Ngân sách và cảnh báo |
-| 6 | Dashboard | Báo cáo và thống kê |
-| 7 | AI Assistant | Phân tích tài chính bằng AI |
-| 8 | Export | Xuất CSV và Excel |
-| 9 | Kiểm thử và tối ưu | Test, bảo mật, hiệu năng |
-| 10 | Hoàn thiện Portfolio | README, ảnh, demo và CV |
-
----
-
-## 4. Thời gian dự kiến
-
-Thời gian đề xuất:
+Kiến trúc AI:
 
 ```text
-10 đến 12 tuần
+Client
+   ↓
+Spring Boot
+   ↓
+AI Controller
+   ↓
+AI Service
+   ↓
+Financial Context Service
+   ↓
+MySQL + Redis
+   ↓
+Prompt Builder
+   ↓
+Ollama Client
+   ↓
+Ollama Local Server
+   ↓
+Local LLM
 ```
-
-Khối lượng học tập phù hợp:
-
-```text
-10 đến 15 giờ mỗi tuần
-```
-
-Đây chỉ là thời gian tham khảo. Có thể điều chỉnh theo lịch học và mức độ quen thuộc với Spring Boot.
 
 ---
 
-# 5. Giai đoạn 0 — Chuẩn bị và thiết kế
+# 2. Công nghệ sử dụng
 
-## Mục tiêu
+Thay:
 
-Hoàn thành tài liệu và thống nhất thiết kế trước khi viết code.
+```text
+OpenAI hoặc Gemini API
+```
 
-## Công việc
+bằng:
 
-- [x] Xác định tên dự án.
-- [x] Chốt phạm vi ứng dụng.
-- [x] Viết `README.md`.
-- [x] Viết `00-Project-Overview.md`.
-- [x] Viết `01-Architecture.md`.
-- [x] Viết `02-Business-Rules.md`.
-- [x] Viết `03-Database-Design.md`.
-- [x] Viết `04-Module-Design.md`.
-- [x] Viết `05-API-Design.md`.
-- [x] Viết `06-AI-Module.md`.
-- [x] Viết `07-UML.md`.
-- [x] Viết `08-Coding-Conventions.md`.
-- [ ] Viết `10-Interview-Notes.md`.
+```text
+Java 21
+Spring Boot 3.5
+Spring Web
+Spring Security
+Spring Data JPA
+Jakarta Validation
+MySQL 8
+Redis
+Flyway
+Maven
+Lombok
+MapStruct
+Springdoc OpenAPI
+Docker Compose
+JUnit 5
+Mockito
+Postman
+JJWT
+Ollama
+Local LLM
+Spring RestClient hoặc Spring AI
+```
 
-## Kết quả cần đạt
+Trong phiên bản đầu tiên:
 
-- Phạm vi dự án rõ ràng.
-- Database được chốt.
-- API được xác định.
-- Cấu trúc package được thống nhất.
-- Không còn mâu thuẫn giữa các tài liệu.
+```text
+Ollama
+    ↓
+Local LLM
+```
+
+là AI Provider chính.
+
+Không sử dụng:
+
+```text
+OpenAI API
+Gemini API
+LangChain
+Vector Database
+RAG
+```
+
+trong phiên bản đầu tiên.
 
 ---
 
-# 6. Giai đoạn 1 — Khởi tạo nền tảng
+# 3. Phạm vi AI phiên bản đầu tiên
 
-## Thời gian dự kiến
+## Có
 
-```text
-Tuần 1
-```
+* AI Financial Assistant.
+* Chat Session.
+* Chat Message History.
+* Phân tích dữ liệu tài chính.
+* Phân tích Income và Expense.
+* Phân tích Category.
+* Phân tích Budget.
+* Phân tích Budget Usage.
+* Phân tích xu hướng chi tiêu.
+* So sánh tháng hiện tại với tháng trước.
+* Financial Context.
+* Redis Financial Context Cache.
+* Local LLM qua Ollama.
+* Prompt Builder.
+* Prompt Injection Protection.
+* AI Rate Limit.
+* Timeout.
+* Retry có giới hạn.
+* Lưu lịch sử Chat vào MySQL.
 
-## Mục tiêu
+## Chưa làm
 
-Khởi tạo project Spring Boot và cấu hình các thành phần nền tảng.
-
-## Công việc
-
-### Khởi tạo Spring Boot
-
-- [ ] Tạo project bằng Spring Initializr.
-- [ ] Sử dụng Java 21.
-- [ ] Sử dụng Maven.
-- [ ] Thiết lập package gốc `com.smartspend`.
-- [ ] Kiểm tra project chạy thành công.
-
-### Dependency
-
-Thêm các dependency:
-
-- [ ] Spring Web.
-- [ ] Spring Security.
-- [ ] Spring Data JPA.
-- [ ] Jakarta Validation.
-- [ ] MySQL Driver.
-- [ ] Spring Data Redis.
-- [ ] Flyway.
-- [ ] Lombok.
-- [ ] MapStruct.
-- [ ] Springdoc OpenAPI.
-- [ ] Spring Boot Test.
-
-### Cấu hình môi trường
-
-- [ ] Tạo `application.yml`.
-- [ ] Tạo profile `dev`.
-- [ ] Tạo profile `test`.
-- [ ] Tạo file cấu hình mẫu.
-- [ ] Không commit secret thật.
-
-### Docker
-
-- [ ] Tạo `docker-compose.yml`.
-- [ ] Cấu hình MySQL 8.
-- [ ] Cấu hình Redis.
-- [ ] Kiểm tra kết nối từ Backend.
-
-### Common Package
-
-- [ ] Tạo `ApiResponse`.
-- [ ] Tạo `PageResponse`.
-- [ ] Tạo `AppException`.
-- [ ] Tạo `ErrorCode`.
-- [ ] Tạo `GlobalExceptionHandler`.
-- [ ] Tạo Trace ID Filter.
-
-### Swagger
-
-- [ ] Cấu hình OpenAPI.
-- [ ] Truy cập được Swagger UI.
-- [ ] Cấu hình Bearer JWT Security Scheme.
-
-## Tiêu chí hoàn thành
-
-- Ứng dụng chạy thành công.
-- Kết nối được MySQL.
-- Kết nối được Redis.
-- Flyway chạy migration.
-- Swagger UI hoạt động.
-- API kiểm tra sức khỏe trả về thành công.
+* RAG.
+* Vector Database.
+* Embedding.
+* AI Agent tự chạy tool.
+* AI sinh SQL rồi trực tiếp thực thi.
+* AI sửa Transaction.
+* AI sửa Budget.
+* AI tạo Payment.
+* Fine-tuning model.
+* Training model riêng.
+* Cloud AI Provider.
 
 ---
 
-# 7. Giai đoạn 2 — Authentication
+# 4. Giai đoạn 7 — AI Financial Assistant
 
-## Thời gian dự kiến
+## Trạng thái
 
 ```text
-Tuần 2
+Chưa bắt đầu
 ```
 
-## Mục tiêu
+## 7.1 Local AI Infrastructure
 
-Hoàn thành cơ chế xác thực và bảo vệ API.
+* [ ] Cài Ollama.
+* [ ] Chọn Local LLM phù hợp cấu hình máy.
+* [ ] Pull model bằng Ollama.
+* [ ] Kiểm tra model chạy local.
+* [ ] Kiểm tra Ollama Local HTTP API.
+* [ ] Spring Boot kết nối được Ollama.
+* [ ] Không cần Cloud AI API Key.
+* [ ] Cấu hình model từ environment/application config.
+* [ ] Cấu hình Ollama Base URL.
+* [ ] Cấu hình timeout.
 
-## Công việc
+Luồng:
 
-### Entity và Repository
-
-- [ ] Tạo Entity `User`.
-- [ ] Tạo Entity `RefreshToken`.
-- [ ] Tạo Entity `UserSession`.
-- [ ] Tạo Repository tương ứng.
-
-### Security
-
-- [ ] Tạo `UserPrincipal`.
-- [ ] Tạo `CustomUserDetailsService`.
-- [ ] Tạo `JwtService`.
-- [ ] Tạo `JwtAuthenticationFilter`.
-- [ ] Cấu hình `SecurityFilterChain`.
-- [ ] Cấu hình CORS.
-- [ ] Cấu hình endpoint public và protected.
-
-### Authentication Service
-
-- [ ] Đăng ký.
-- [ ] Mã hóa mật khẩu bằng BCrypt.
-- [ ] Đăng nhập.
-- [ ] Sinh Access Token.
-- [ ] Sinh Refresh Token.
-- [ ] Băm Refresh Token trước khi lưu.
-- [ ] Refresh Token Rotation.
-- [ ] Đăng xuất.
-- [ ] Lấy thông tin người dùng hiện tại.
-
-### Rate Limit
-
-- [ ] Giới hạn số lần đăng nhập thất bại.
-- [ ] Lưu bộ đếm trên Redis.
-- [ ] Thiết lập thời gian hết hạn.
-
-### Kiểm thử
-
-- [ ] Đăng ký hợp lệ.
-- [ ] Email bị trùng.
-- [ ] Đăng nhập đúng.
-- [ ] Đăng nhập sai.
-- [ ] Access Token không hợp lệ.
-- [ ] Refresh Token hết hạn.
-- [ ] Refresh Token đã bị thu hồi.
-- [ ] API bảo vệ không cho truy cập khi thiếu token.
-
-## Tiêu chí hoàn thành
-
-- Người dùng đăng ký được.
-- Người dùng đăng nhập và nhận token.
-- Có thể làm mới token.
-- Logout thu hồi Refresh Token.
-- API protected hoạt động đúng.
-- Không lộ mật khẩu hoặc Token Hash.
+```text
+Spring Boot
+     ↓
+localhost:11434
+     ↓
+Ollama
+     ↓
+Local LLM
+```
 
 ---
 
-# 8. Giai đoạn 3 — Category
+## 7.2 AI Configuration
 
-## Thời gian dự kiến
+Dự kiến:
 
 ```text
-Tuần 3
+ai/config/AiProperties.java
+ai/config/AiConfig.java
 ```
 
-## Mục tiêu
+Cấu hình:
 
-Hoàn thành quản lý danh mục thu nhập và chi tiêu.
+```text
+Base URL
+Model
+Temperature
+Timeout
+Max Context
+```
 
-## Công việc
+Ví dụ logic:
 
-### Database
+```text
+app.ai.provider=ollama
+app.ai.base-url=http://localhost:11434
+app.ai.model=<local-model>
+```
 
-- [ ] Tạo migration bảng `categories`.
-- [ ] Seed danh mục mặc định.
-- [ ] Tạo unique constraint phù hợp.
+Tên model không hard-code trong Service.
 
-### Backend
+---
 
-- [ ] Tạo Entity `Category`.
-- [ ] Tạo Enum `CategoryType`.
-- [ ] Tạo DTO.
-- [ ] Tạo Mapper.
-- [ ] Tạo Repository.
-- [ ] Tạo Service.
-- [ ] Tạo Controller.
+## 7.3 AI Provider Client
+
+Dự kiến:
+
+```text
+ai/client/AiProviderClient.java
+ai/client/OllamaClient.java
+```
+
+Abstraction:
+
+```text
+AiChatService
+      ↓
+AiProviderClient
+      ↓
+OllamaClient
+      ↓
+Ollama Local API
+```
+
+Mục tiêu:
+
+* Business Service không phụ thuộc trực tiếp Ollama.
+* Có thể đổi model mà không sửa business logic.
+* Có thể bổ sung provider khác về sau nếu cần.
+
+---
+
+## 7.4 Chat Entity
+
+Sử dụng các bảng đã có:
+
+```text
+chat_sessions
+chat_messages
+```
+
+Dự kiến:
+
+```text
+ai/entity/ChatSession.java
+ai/entity/ChatMessage.java
+```
+
+Quan hệ:
+
+```text
+User
+  ↓
+ChatSession
+  ↓
+ChatMessage
+```
+
+Yêu cầu:
+
+* Quan hệ LAZY.
+* Ownership theo User.
+* Không tải toàn bộ message history nếu không cần.
+* Có giới hạn số message đưa vào context AI.
+
+---
+
+## 7.5 Repository
+
+Dự kiến:
+
+```text
+ai/repository/ChatSessionRepository.java
+ai/repository/ChatMessageRepository.java
+```
+
+Chức năng:
+
+* Tìm Session của current User.
+* Lấy message theo Session.
+* Pagination lịch sử Chat.
+* Không truy cập Session của User khác.
+
+---
+
+## 7.6 DTO
+
+Dự kiến:
+
+```text
+ai/dto/request/AiChatRequest.java
+
+ai/dto/response/AiChatResponse.java
+ai/dto/response/ChatSessionResponse.java
+ai/dto/response/ChatMessageResponse.java
+```
+
+Request không chứa:
+
+```text
+userId
+financialContext
+systemPrompt
+model
+```
+
+User chỉ gửi nội dung câu hỏi.
+
+Ví dụ:
+
+```json
+{
+  "message": "Tháng này tôi đang tiêu nhiều nhất vào đâu?"
+}
+```
+
+---
+
+## 7.7 Financial Context
+
+Đây là phần trung tâm của AI Module.
+
+Dự kiến:
+
+```text
+ai/context/FinancialContext.java
+ai/context/FinancialContextService.java
+ai/context/FinancialContextServiceImpl.java
+```
+
+Financial Context lấy dữ liệu từ:
+
+```text
+Transaction
+Budget
+Category
+Dashboard Aggregate Query
+```
+
+Không truyền toàn bộ Transaction Entity cho AI.
+
+Không làm:
+
+```text
+SELECT *
+    ↓
+10000 Transaction
+    ↓
+Local LLM
+```
+
+Thay vào đó:
+
+```text
+MySQL
+  ↓
+SUM / GROUP BY
+  ↓
+FinancialContext
+  ↓
+Local LLM
+```
+
+Context ví dụ:
+
+```text
+Period: 2026-08
+
+Total Income:
+25,000,000
+
+Total Expense:
+18,000,000
+
+Balance:
+7,000,000
+
+Expense by Category:
+Food:
+5,000,000
+
+Shopping:
+4,000,000
+
+Transport:
+2,000,000
+
+Budgets:
+Food:
+5,000,000 / 6,000,000
+
+Shopping:
+4,000,000 / 3,500,000
+```
+
+---
+
+## 7.8 Financial Context Cache
+
+Redis key:
+
+```text
+financial-context:user:{userId}
+```
+
+Ví dụ:
+
+```text
+financial-context:user:1
+```
+
+Luồng:
+
+```text
+AI request
+    ↓
+Redis
+    ↓
+CACHE HIT
+    ↓
+FinancialContext
+```
+
+Nếu cache miss:
+
+```text
+AI request
+    ↓
+Redis MISS
+    ↓
+MySQL Aggregate Query
+    ↓
+FinancialContext
+    ↓
+Redis SET
+    ↓
+Ollama
+```
+
+Cache phải bị xóa khi:
+
+```text
+Transaction Create
+Transaction Update
+Transaction Delete
+
+Budget Create
+Budget Update
+Budget Delete
+```
+
+Phần Transaction và Budget hiện tại đã chuẩn bị:
+
+```text
+financial-context:user:{userId}
+```
+
+cho mục đích này.
+
+---
+
+## 7.9 Prompt Builder
+
+Dự kiến:
+
+```text
+ai/prompt/FinancialPromptBuilder.java
+```
+
+Prompt gồm:
+
+```text
+System Instruction
+Financial Context
+Chat History giới hạn
+User Message
+Safety Rules
+```
+
+Ví dụ:
+
+```text
+Bạn là trợ lý phân tích tài chính cá nhân của SmartSpend.
+
+Bạn chỉ được phân tích dữ liệu được cung cấp.
+
+Không được giả vờ rằng bạn đã thực hiện giao dịch.
+
+Không được sửa Transaction hoặc Budget.
+
+Không được yêu cầu secret.
+
+Nếu không đủ dữ liệu, hãy nói rõ rằng dữ liệu chưa đủ.
+
+Financial Context:
+...
+
+User Question:
+...
+```
+
+Prompt không chứa:
+
+```text
+Password
+JWT
+Refresh Token
+Database Password
+Redis Password
+Secret Key
+```
+
+---
+
+## 7.10 AI Read-Only
+
+AI chỉ được phép:
+
+```text
+Đọc dữ liệu đã được Backend tổng hợp
+Phân tích
+So sánh
+Giải thích
+Đưa ra nhận xét
+Đưa ra gợi ý
+```
+
+AI không được:
+
+```text
+INSERT Transaction
+UPDATE Transaction
+DELETE Transaction
+
+CREATE Budget
+UPDATE Budget
+DELETE Budget
+```
+
+Luồng bắt buộc:
+
+```text
+Database
+   ↓
+Java Backend
+   ↓
+Financial Context
+   ↓
+Ollama
+```
+
+Không cho:
+
+```text
+Ollama
+   ↓
+SQL
+   ↓
+Database
+```
+
+---
+
+## 7.11 Chat Service
+
+Dự kiến:
+
+```text
+ai/service/AiChatService.java
+ai/service/AiChatServiceImpl.java
+```
+
+Luồng:
+
+```text
+User Question
+     ↓
+Current User
+     ↓
+Load/Create ChatSession
+     ↓
+Save USER Message
+     ↓
+FinancialContextService
+     ↓
+PromptBuilder
+     ↓
+OllamaClient
+     ↓
+Local LLM
+     ↓
+AI Response
+     ↓
+Save ASSISTANT Message
+     ↓
+Response DTO
+```
+
+---
+
+## 7.12 Controller
+
+Dự kiến:
+
+```text
+ai/controller/AiChatController.java
+```
+
+API dự kiến:
+
+```text
+POST /api/ai/chat
+
+GET /api/ai/sessions
+
+GET /api/ai/sessions/{sessionId}
+
+GET /api/ai/sessions/{sessionId}/messages
+
+DELETE /api/ai/sessions/{sessionId}
+```
+
+Tất cả endpoint:
+
+```text
+Authentication Required
+```
+
+---
+
+## 7.13 Timeout
+
+Local LLM có thể phản hồi chậm hơn REST API thông thường.
+
+Phải có:
+
+```text
+Connection Timeout
+Read Timeout
+```
+
+Nếu Ollama không chạy:
+
+```text
+Spring Boot
+    ↓
+Ollama connection failed
+    ↓
+AI_PROVIDER_UNAVAILABLE
+```
+
+Không để request treo vô hạn.
+
+---
+
+## 7.14 Retry
+
+Không retry vô hạn.
+
+Chỉ retry lỗi phù hợp.
+
+Ví dụ:
+
+```text
+Connection reset
+Temporary Ollama failure
+```
+
+Không retry:
+
+```text
+Invalid Request
+Model Not Found
+Validation Error
+```
+
+---
+
+## 7.15 AI Rate Limit
+
+Redis dùng để hạn chế AI request.
+
+Ví dụ key:
+
+```text
+ai-rate-limit:user:{userId}
+```
+
+Mục tiêu:
+
+* Tránh spam Local LLM.
+* Tránh máy local bị quá tải.
+* Bảo vệ CPU/GPU/RAM.
+* Hạn chế nhiều request AI chạy đồng thời.
+
+Rate Limit AI khác Login Rate Limit.
+
+---
+
+## 7.16 Prompt Injection Protection
+
+User có thể nhập:
+
+```text
+Ignore all previous instructions...
+```
+
+Backend không được coi User Message là System Instruction.
+
+Prompt phải phân tách:
+
+```text
+SYSTEM RULES
+FINANCIAL CONTEXT
+CHAT HISTORY
+USER MESSAGE
+```
+
+AI không được:
+
+* Tiết lộ system prompt.
+* Tiết lộ secret.
+* Tự thay đổi quyền.
+* Thực thi SQL.
+* Tự gọi API nội bộ ngoài luồng Backend kiểm soát.
+
+---
+
+## 7.17 Local AI Privacy
+
+Dữ liệu tài chính được xử lý theo luồng:
+
+```text
+MySQL Local
+     ↓
+Spring Boot Local
+     ↓
+Ollama Local
+     ↓
+Local LLM
+```
+
+Phiên bản đầu tiên không chủ động gửi dữ liệu tài chính tới:
+
+```text
+OpenAI
+Gemini
+Anthropic
+Cloud LLM Provider
+```
+
+---
+
+## 7.18 AI Test
+
+Dự kiến:
+
+```text
+AiChatServiceImplTest
+FinancialContextServiceImplTest
+OllamaClientTest
+AiChatControllerIntegrationTest
+```
+
+Test:
+
+* [ ] Build Financial Context đúng.
+* [ ] Không lấy Transaction Soft Deleted.
+* [ ] Ownership Chat Session.
+* [ ] Cache hit.
+* [ ] Cache miss.
+* [ ] Prompt Builder.
+* [ ] Save USER Message.
+* [ ] Save ASSISTANT Message.
+* [ ] Ollama success.
+* [ ] Ollama timeout.
+* [ ] Ollama unavailable.
+* [ ] Invalid AI response.
+* [ ] Rate Limit.
+* [ ] Authentication required.
+
+Integration Test không nên phụ thuộc Local LLM thật cho mọi lần:
+
+```text
+Unit / Integration Test
+       ↓
+Mock AiProviderClient
+```
+
+Test Ollama thật được thực hiện riêng bằng:
+
+```text
+Manual Integration Test
+```
+
+---
+
+# 5. Milestone 4 — AI Integration
+
+Thay nội dung cũ bằng:
+
+```text
+Local AI Infrastructure
+Ollama
+Local LLM
+Chat Session
+Chat Message
+Financial Context
+Financial Context Cache
+Prompt Builder
+Ollama Client
+AI Service
+AI Controller
+Timeout
+Retry
+Rate Limit
+Prompt Injection Protection
+AI Read-Only
+```
+
+Trạng thái:
+
+```text
+Chưa bắt đầu
+```
+
+Điều kiện hoàn thành:
+
+```text
+Spring Boot
+    ↓
+Ollama Local
+    ↓
+Local LLM
+```
+
+hoạt động mà không cần Cloud AI API.
+
+---
+
+# 6. Version 0.4.0
+
+Thay:
+
+```text
+AI Financial Assistant
+```
+
+bằng:
+
+```text
+Local AI Financial Assistant
+
+Ollama
+Local LLM
+Financial Context
+Chat History
+Redis Financial Context Cache
+AI Rate Limit
+Prompt Protection
+```
+
+Trạng thái:
+
+```text
+Chưa bắt đầu
+```
+
+---
+
+# 7. Technical Decision mới
+
+## TD-019 — AI chỉ đọc dữ liệu
+
+AI không trực tiếp sửa:
+
+```text
+Transaction
+Budget
+Category
+Notification
+```
+
+AI chỉ nhận Financial Context do Backend chuẩn bị.
+
+---
+
+## TD-024 — AI chạy Local
+
+SmartSpend sử dụng:
+
+```text
+Ollama
++
+Local LLM
+```
+
+thay cho Cloud AI Provider trong phiên bản đầu tiên.
+
+Luồng:
+
+```text
+Spring Boot
+     ↓
+Ollama Local API
+     ↓
+Local LLM
+```
+
+---
+
+## TD-025 — Ollama là AI Runtime
+
+Spring Boot không chạy model trực tiếp trong JVM.
+
+Model được quản lý bởi:
+
+```text
+Ollama
+```
+
+Spring Boot giao tiếp với Ollama qua Local HTTP API.
+
+---
+
+## TD-026 — Không phụ thuộc Cloud AI API
+
+Phiên bản đầu tiên không yêu cầu:
+
+```text
+OPENAI_API_KEY
+GEMINI_API_KEY
+```
+
+AI Provider không được hard-code vào business logic.
+
+---
+
+## TD-027 — AI Provider Abstraction
+
+Sử dụng:
+
+```text
+AiProviderClient
+       ↓
+OllamaClient
+```
+
+Service chỉ phụ thuộc:
+
+```text
+AiProviderClient
+```
+
+không phụ thuộc trực tiếp implementation Ollama.
+
+---
+
+## TD-028 — Financial Context thay vì gửi toàn bộ dữ liệu
+
+Không gửi toàn bộ Transaction cho LLM.
+
+Sử dụng:
+
+```text
+Aggregate Query
+Projection
+Budget
+Dashboard Statistic
+        ↓
+FinancialContext
+```
+
+---
+
+## TD-029 — Không sử dụng RAG trong V1
+
+V1 không sử dụng:
+
+```text
+Embedding
+Vector Database
+RAG
+```
+
+Lý do:
+
+Dữ liệu SmartSpend chủ yếu là Structured Data trong MySQL.
+
+Luồng phù hợp hơn:
+
+```text
+SQL Aggregate
+      ↓
+Financial Context
+      ↓
+Local LLM
+```
+
+RAG chỉ được cân nhắc nếu sau này AI cần truy vấn:
+
+```text
+PDF
+Financial Documents
+Knowledge Base
+FAQ
+Regulation Documents
+```
+
+---
+
+## TD-030 — Financial Context Cache
+
+Redis key:
+
+```text
+financial-context:user:{userId}
+```
+
+Transaction/Budget thay đổi phải invalidate cache.
+
+Redis chỉ là cache.
+
+MySQL vẫn là Source of Truth.
+
+---
+
+## TD-031 — Local LLM không truy cập Database trực tiếp
+
+Không cho:
+
+```text
+LLM
+ ↓
+SQL
+ ↓
+MySQL
+```
+
+Chỉ cho:
+
+```text
+MySQL
+ ↓
+Repository
+ ↓
+Service
+ ↓
+FinancialContext
+ ↓
+LLM
+```
+
+---
+
+# 8. Cập nhật rủi ro AI
+
+Xóa:
+
+```text
+AI Provider chi phí cao
+→ Rate Limit + Token Logging
+```
+
+Thay bằng:
+
+| Rủi ro                               | Mức độ     | Cách xử lý                        |
+| ------------------------------------ | ---------- | --------------------------------- |
+| Local LLM chạy chậm                  | Trung bình | Chọn model phù hợp phần cứng      |
+| Ollama không chạy                    | Trung bình | Timeout + AI_PROVIDER_UNAVAILABLE |
+| Model dùng nhiều RAM                 | Cao        | Giới hạn model theo cấu hình máy  |
+| CPU/GPU quá tải                      | Trung bình | AI Rate Limit                     |
+| AI Hallucination                     | Cao        | Financial Context + System Rules  |
+| Prompt Injection                     | Cao        | Tách System/User Prompt           |
+| Context quá dài                      | Trung bình | Aggregate + giới hạn Chat History |
+| AI truy cập dữ liệu không đúng quyền | Cao        | Backend kiểm soát Ownership       |
+| Dữ liệu cũ trong AI Cache            | Trung bình | Cache Invalidation                |
+| Model thay đổi behavior              | Trung bình | Model config + test               |
+| Local model không tồn tại            | Trung bình | Startup/health validation         |
+
+---
+
+# 9. Definition of Done bổ sung cho AI
+
+AI task chỉ hoàn thành khi:
+
+* [ ] Ollama chạy local.
+* [ ] Model được pull thành công.
+* [ ] Spring Boot gọi được Ollama.
+* [ ] Không cần Cloud API Key.
+* [ ] AI chỉ đọc dữ liệu.
+* [ ] Ownership được kiểm tra trước khi build context.
+* [ ] Không gửi Entity trực tiếp cho AI.
+* [ ] Không gửi secret.
+* [ ] Không gửi JWT.
+* [ ] Không gửi password.
+* [ ] Financial Context dùng aggregate query.
+* [ ] Financial Context Cache hoạt động.
+* [ ] Cache invalidation hoạt động.
+* [ ] AI Rate Limit hoạt động.
+* [ ] Timeout hoạt động.
+* [ ] Ollama unavailable được xử lý.
+* [ ] Prompt Injection Protection.
+* [ ] Chat History có giới hạn.
+* [ ] Unit Test dùng mock AI Provider.
+* [ ] Manual Test với Ollama thật.
+* [ ] Postman test thành công.
+
+---
+
+# 10. Công việc sau Dashboard
+
+Sau khi Dashboard hoàn thành, thứ tự mới là:
+
+```text
+Chat 24
+Local AI Infrastructure + Ollama
+
+        ↓
+
+Chat 25
+Chat Entity + Repository
+
+        ↓
+
+Chat 26
+Financial Context + Redis Cache
+
+        ↓
+
+Chat 27
+Prompt Builder + Safety Rules
+
+        ↓
+
+Chat 28
+AiProviderClient + OllamaClient
+
+        ↓
+
+Chat 29
+AI Chat Service
+
+        ↓
+
+Chat 30
+AI Controller
+
+        ↓
+
+Chat 31
+AI Rate Limit + Timeout + Error Handling
+
+        ↓
+
+Chat 32
+AI Test
+
+        ↓
+
+Postman + Ollama Real Test
+
+        ↓
+
+Hoàn thành Local AI Financial Assistant
+```
+
+---
+
+# 11. Roadmap Chat cho AI
+
+## Chat 24 — Local AI Infrastructure
+
+### File
+
+```text
+ai/config/AiProperties.java
+ai/config/AiConfig.java
+
+ai/client/AiProviderClient.java
+ai/client/OllamaClient.java
+```
 
 ### Chức năng
 
-- [ ] Lấy danh sách danh mục.
-- [ ] Lọc theo `INCOME` hoặc `EXPENSE`.
-- [ ] Tạo danh mục cá nhân.
-- [ ] Cập nhật danh mục.
-- [ ] Xóa danh mục chưa được sử dụng.
-- [ ] Không cho sửa danh mục mặc định.
-- [ ] Kiểm tra quyền sở hữu.
-
-### Kiểm thử
-
-- [ ] Tạo danh mục hợp lệ.
-- [ ] Tên danh mục bị trùng.
-- [ ] Không sửa danh mục mặc định.
-- [ ] Không xóa danh mục của người khác.
-- [ ] Lấy được cả danh mục hệ thống và danh mục cá nhân.
-
-## Tiêu chí hoàn thành
-
-- CRUD Category hoạt động.
-- Danh mục mặc định được seed thành công.
-- Quyền sở hữu được kiểm tra.
-- API xuất hiện đầy đủ trên Swagger.
+* Ollama Local API.
+* Model configurable.
+* Base URL configurable.
+* Timeout.
+* Kiểm tra Ollama connection.
 
 ---
 
-# 9. Giai đoạn 4 — Transaction
+## Chat 25 — Chat Entity và Repository
 
-## Thời gian dự kiến
+### File
 
 ```text
-Tuần 4 đến tuần 5
+ai/entity/ChatSession.java
+ai/entity/ChatMessage.java
+
+ai/repository/ChatSessionRepository.java
+ai/repository/ChatMessageRepository.java
 ```
-
-## Mục tiêu
-
-Hoàn thành module trung tâm của hệ thống.
-
-## Công việc
-
-### Database
-
-- [ ] Tạo migration bảng `transactions`.
-- [ ] Thêm Foreign Key.
-- [ ] Thêm index theo người dùng và ngày.
-- [ ] Thêm cột Soft Delete.
-
-### Backend
-
-- [ ] Tạo Entity `Transaction`.
-- [ ] Tạo Enum `TransactionType`.
-- [ ] Tạo Request DTO.
-- [ ] Tạo Response DTO.
-- [ ] Tạo Mapper.
-- [ ] Tạo Repository.
-- [ ] Tạo Specification.
-- [ ] Tạo Service.
-- [ ] Tạo Controller.
 
 ### Chức năng
 
-- [ ] Tạo khoản thu.
-- [ ] Tạo khoản chi.
-- [ ] Xem chi tiết.
-- [ ] Cập nhật.
-- [ ] Xóa mềm.
-- [ ] Phân trang.
-- [ ] Lọc theo thời gian.
-- [ ] Lọc theo danh mục.
-- [ ] Lọc theo loại.
-- [ ] Tìm kiếm ghi chú.
-- [ ] Lọc theo khoảng tiền.
-
-### Business Rules
-
-- [ ] Số tiền lớn hơn 0.
-- [ ] Không tạo giao dịch trong tương lai.
-- [ ] Loại giao dịch khớp loại danh mục.
-- [ ] Danh mục hợp lệ.
-- [ ] Chỉ truy cập dữ liệu của chính mình.
-- [ ] Giao dịch đã xóa không xuất hiện trong truy vấn.
-
-### Cache
-
-- [ ] Xóa cache Dashboard khi giao dịch thay đổi.
-- [ ] Xóa cache Financial Context nếu có.
-
-### Kiểm thử
-
-- [ ] Tạo thu nhập.
-- [ ] Tạo chi tiêu.
-- [ ] Loại không khớp danh mục.
-- [ ] Số tiền không hợp lệ.
-- [ ] Ngày ở tương lai.
-- [ ] Truy cập giao dịch người khác.
-- [ ] Soft Delete.
-- [ ] Filter và Pagination.
-
-## Tiêu chí hoàn thành
-
-- Toàn bộ CRUD và Filter hoạt động.
-- Soft Delete đúng.
-- Query không lấy giao dịch đã xóa.
-- Business Rules được kiểm thử.
-- Transaction API ổn định.
+* Chat Session thuộc User.
+* Chat Message thuộc Session.
+* Ownership.
+* LAZY.
+* Pagination History.
 
 ---
 
-# 10. Giai đoạn 5 — Budget và Notification
+## Chat 26 — Financial Context
 
-## Thời gian dự kiến
+### File
 
 ```text
-Tuần 6
+ai/context/FinancialContext.java
+ai/context/FinancialContextService.java
+ai/context/FinancialContextServiceImpl.java
+ai/cache/FinancialContextCacheService.java
 ```
 
-## Mục tiêu
+### Chức năng
 
-Theo dõi ngân sách và tạo cảnh báo chi tiêu.
+* Tổng Income.
+* Tổng Expense.
+* Balance.
+* Category Statistic.
+* Budget.
+* Budget Usage.
+* Monthly Trend.
+* Redis Cache.
+* Không tính Transaction Soft Deleted.
 
-## Công việc
+Cache key:
 
-### Budget
-
-- [ ] Tạo migration bảng `budgets`.
-- [ ] Tạo Entity và Repository.
-- [ ] Tạo DTO và Mapper.
-- [ ] Tạo Service và Controller.
-- [ ] Tạo ngân sách theo tháng.
-- [ ] Cập nhật hạn mức.
-- [ ] Xóa ngân sách.
-- [ ] Tính số tiền đã chi.
-- [ ] Tính số tiền còn lại.
-- [ ] Tính phần trăm sử dụng.
-
-### Notification
-
-- [ ] Tạo migration bảng `notifications`.
-- [ ] Tạo Entity và Repository.
-- [ ] Tạo Service và Controller.
-- [ ] Lấy danh sách thông báo.
-- [ ] Đếm thông báo chưa đọc.
-- [ ] Đánh dấu đã đọc.
-- [ ] Đánh dấu tất cả đã đọc.
-- [ ] Xóa thông báo.
-
-### Budget Alert
-
-- [ ] Cảnh báo tại 80%.
-- [ ] Cảnh báo tại 100%.
-- [ ] Cảnh báo khi vượt 100%.
-- [ ] Hạn chế tạo thông báo trùng.
-
-### Kiểm thử
-
-- [ ] Tạo ngân sách hợp lệ.
-- [ ] Ngân sách trùng tháng.
-- [ ] Danh mục không phải Expense.
-- [ ] Tính tiến độ đúng.
-- [ ] Tạo thông báo đúng ngưỡng.
-- [ ] Không xem thông báo của người khác.
-
-## Tiêu chí hoàn thành
-
-- Ngân sách được tính đúng từ Transaction.
-- Thông báo được tạo đúng lúc.
-- Không có thông báo trùng không cần thiết.
-- Budget API và Notification API hoạt động.
+```text
+financial-context:user:{userId}
+```
 
 ---
 
-# 11. Giai đoạn 6 — Dashboard
+## Chat 27 — Prompt Builder
 
-## Thời gian dự kiến
+### File
 
 ```text
-Tuần 7
+ai/prompt/FinancialPromptBuilder.java
 ```
 
-## Mục tiêu
+### Chức năng
 
-Cung cấp số liệu tổng quan và dữ liệu cho biểu đồ.
-
-## Công việc
-
-### Query tổng hợp
-
-- [ ] Tổng thu.
-- [ ] Tổng chi.
-- [ ] Chênh lệch thu chi.
-- [ ] Chi tiêu theo danh mục.
-- [ ] Xu hướng theo tháng.
-- [ ] Giao dịch gần đây.
-- [ ] So sánh kỳ hiện tại với kỳ trước.
-
-### DTO
-
-- [ ] `DashboardSummaryResponse`.
-- [ ] `CategoryStatisticResponse`.
-- [ ] `TrendResponse`.
-- [ ] `PeriodComparisonResponse`.
-
-### Cache
-
-- [ ] Cache Dashboard bằng Redis.
-- [ ] Thiết kế Cache Key.
-- [ ] Thiết lập TTL.
-- [ ] Xóa cache khi Transaction thay đổi.
-
-### Kiểm thử
-
-- [ ] Không tính giao dịch đã xóa.
-- [ ] Tổng thu đúng.
-- [ ] Tổng chi đúng.
-- [ ] Phần trăm danh mục đúng.
-- [ ] So sánh kỳ đúng.
-- [ ] Cache hoạt động.
-
-## Tiêu chí hoàn thành
-
-- Dashboard API trả dữ liệu chính xác.
-- Query có hiệu năng phù hợp.
-- Redis Cache hoạt động đúng.
-- Dữ liệu đủ cho Frontend vẽ biểu đồ.
+* System Prompt.
+* Financial Context.
+* User Message.
+* Chat History.
+* Prompt Injection Protection.
+* Không gửi secret.
+* Không gửi JWT.
+* AI Read-Only.
 
 ---
 
-# 12. Giai đoạn 7 — AI Financial Assistant
+## Chat 28 — Ollama Client
 
-## Thời gian dự kiến
+### File
 
 ```text
-Tuần 8 đến tuần 9
+ai/client/AiProviderClient.java
+ai/client/OllamaClient.java
+
+ai/model/OllamaChatRequest.java
+ai/model/OllamaChatResponse.java
 ```
 
-## Mục tiêu
+### Chức năng
 
-Tích hợp AI để phân tích dữ liệu tài chính của người dùng.
-
-## Công việc
-
-### Database
-
-- [ ] Tạo bảng `chat_sessions`.
-- [ ] Tạo bảng `chat_messages`.
-- [ ] Thêm index lịch sử hội thoại.
-
-### Chat Module
-
-- [ ] Tạo phiên chat.
-- [ ] Lấy danh sách phiên.
-- [ ] Lấy lịch sử tin nhắn.
-- [ ] Xóa phiên chat.
-- [ ] Kiểm tra quyền sở hữu.
-
-### Context Builder
-
-- [ ] Tổng hợp thu và chi.
-- [ ] Tổng hợp theo danh mục.
-- [ ] Tổng hợp ngân sách.
-- [ ] So sánh với kỳ trước.
-- [ ] Giảm dữ liệu không cần thiết.
-
-### Prompt Builder
-
-- [ ] Tạo System Prompt.
-- [ ] Thêm Financial Context.
-- [ ] Thêm lịch sử hội thoại.
-- [ ] Thêm câu hỏi hiện tại.
-- [ ] Giới hạn độ dài Prompt.
-
-### AI Provider
-
-- [ ] Tạo `AIProviderClient`.
-- [ ] Tích hợp OpenAI hoặc Gemini.
-- [ ] Cấu hình timeout.
-- [ ] Cấu hình retry.
-- [ ] Xử lý Provider lỗi.
-- [ ] Parse response.
-
-### Bảo mật và chi phí
-
-- [ ] Không gửi dữ liệu nhạy cảm.
-- [ ] Rate Limit AI.
-- [ ] Giới hạn độ dài câu hỏi.
-- [ ] Giới hạn lịch sử chat.
-- [ ] Log số token và thời gian phản hồi.
-
-### Kiểm thử
-
-- [ ] Mock AI Provider.
-- [ ] AI trả lời thành công.
-- [ ] Không đủ dữ liệu.
-- [ ] Provider timeout.
-- [ ] Provider lỗi.
-- [ ] Phiên chat thuộc người khác.
-- [ ] Rate Limit.
-
-## Tiêu chí hoàn thành
-
-- Người dùng có thể tạo phiên chat.
-- AI trả lời dựa trên dữ liệu thật.
-- Lịch sử hội thoại được lưu.
-- AI không sửa dữ liệu.
-- Provider lỗi không làm ứng dụng bị crash.
-- Không lộ thông tin nhạy cảm.
+* POST local Ollama API.
+* Non-streaming trước.
+* Timeout.
+* Parse Response.
+* Provider unavailable.
+* Model not found.
 
 ---
 
-# 13. Giai đoạn 8 — Export
+## Chat 29 — AI Chat Service
 
-## Thời gian dự kiến
+### File
 
 ```text
-Tuần 10
+ai/service/AiChatService.java
+ai/service/AiChatServiceImpl.java
 ```
 
-## Mục tiêu
+### Luồng
 
-Cho phép người dùng tải dữ liệu giao dịch.
-
-## Công việc
-
-- [ ] Tạo Export Service.
-- [ ] Tạo CSV Generator.
-- [ ] Tạo Excel Generator.
-- [ ] Lọc theo ngày.
-- [ ] Lọc theo loại.
-- [ ] Lọc theo danh mục.
-- [ ] Thiết lập Content Type.
-- [ ] Thiết lập tên file.
-- [ ] Chỉ xuất giao dịch chưa xóa.
-- [ ] Chỉ xuất dữ liệu người dùng hiện tại.
-
-## Kiểm thử
-
-- [ ] Xuất CSV.
-- [ ] Xuất Excel.
-- [ ] Khoảng ngày sai.
-- [ ] Không có dữ liệu.
-- [ ] Dữ liệu của người khác không bị xuất.
-- [ ] Nội dung file đúng.
-
-## Tiêu chí hoàn thành
-
-- File tải xuống được.
-- Dữ liệu đúng bộ lọc.
-- Định dạng file hợp lệ.
-- Không cần lưu Export Job trong Database.
+```text
+Current User
+    ↓
+Chat Session
+    ↓
+Save User Message
+    ↓
+Financial Context
+    ↓
+Prompt
+    ↓
+Ollama
+    ↓
+Save Assistant Message
+    ↓
+Response
+```
 
 ---
 
-# 14. Giai đoạn 9 — Kiểm thử và tối ưu
+## Chat 30 — AI Controller
 
-## Thời gian dự kiến
-
-```text
-Tuần 11
-```
-
-## Mục tiêu
-
-Đảm bảo ứng dụng ổn định trước khi demo.
-
-## Công việc
-
-### Unit Test
-
-- [ ] Authentication Service.
-- [ ] Category Service.
-- [ ] Transaction Service.
-- [ ] Budget Service.
-- [ ] Dashboard Service.
-- [ ] Chat Service.
-- [ ] Prompt Builder.
-- [ ] Context Builder.
-
-### Integration Test
-
-- [ ] Register và Login.
-- [ ] CRUD Category.
-- [ ] CRUD Transaction.
-- [ ] Budget Alert.
-- [ ] Dashboard.
-- [ ] Notification.
-- [ ] AI Chat.
-- [ ] Export.
-
-### Security Review
-
-- [ ] Kiểm tra JWT.
-- [ ] Kiểm tra quyền sở hữu.
-- [ ] Kiểm tra Validation.
-- [ ] Kiểm tra CORS.
-- [ ] Kiểm tra secret.
-- [ ] Kiểm tra log nhạy cảm.
-- [ ] Kiểm tra Rate Limit.
-
-### Database Review
-
-- [ ] Kiểm tra index.
-- [ ] Kiểm tra Foreign Key.
-- [ ] Kiểm tra query chậm.
-- [ ] Kiểm tra N+1 Query.
-- [ ] Kiểm tra Soft Delete.
-- [ ] Kiểm tra Flyway Migration.
-
-### Hiệu năng
-
-- [ ] Đo thời gian Dashboard.
-- [ ] Kiểm tra Redis Cache.
-- [ ] Kiểm tra Pagination.
-- [ ] Không tải toàn bộ dữ liệu không cần thiết.
-- [ ] Kiểm tra timeout AI.
-
-## Tiêu chí hoàn thành
-
-- Các luồng chính có test.
-- Không còn lỗi nghiêm trọng.
-- Không có dữ liệu người dùng bị truy cập chéo.
-- Query chính hoạt động ổn định.
-- API trả lỗi rõ ràng.
-
----
-
-# 15. Giai đoạn 10 — Hoàn thiện Portfolio
-
-## Thời gian dự kiến
+### File
 
 ```text
-Tuần 12
+ai/controller/AiChatController.java
 ```
-
-## Mục tiêu
-
-Chuẩn bị dự án để đưa lên GitHub, CV và demo.
-
-## Công việc
-
-### GitHub
-
-- [ ] Hoàn thiện README.
-- [ ] Thêm ảnh Dashboard.
-- [ ] Thêm ảnh Swagger.
-- [ ] Thêm ảnh AI Chat.
-- [ ] Thêm ERD.
-- [ ] Thêm sơ đồ kiến trúc.
-- [ ] Kiểm tra toàn bộ link tài liệu.
-- [ ] Xóa secret và dữ liệu cá nhân.
-- [ ] Thêm file cấu hình mẫu.
-
-### Demo Data
-
-- [ ] Tạo tài khoản mẫu.
-- [ ] Seed danh mục.
-- [ ] Tạo giao dịch mẫu.
-- [ ] Tạo ngân sách mẫu.
-- [ ] Chuẩn bị câu hỏi AI mẫu.
-
-### Docker
-
-- [ ] Tạo Dockerfile.
-- [ ] Hoàn thiện Docker Compose.
-- [ ] Kiểm tra chạy project bằng một lệnh.
-- [ ] Viết hướng dẫn chạy.
 
 ### API
 
-- [ ] Hoàn thiện Swagger.
-- [ ] Export Postman Collection.
-- [ ] Thêm ví dụ Request và Response.
-
-### CV
-
-- [ ] Viết mô tả dự án.
-- [ ] Liệt kê Tech Stack.
-- [ ] Liệt kê đóng góp chính.
-- [ ] Gắn link GitHub.
-- [ ] Gắn link demo nếu có.
-
-## Tiêu chí hoàn thành
-
-- Người khác clone và chạy được.
-- README dễ hiểu.
-- Có ảnh minh họa.
-- Swagger đầy đủ.
-- Không chứa secret.
-- Dự án sẵn sàng để đưa vào CV.
-
----
-
-# 16. Milestone
-
-## Milestone 1 — Backend Foundation
-
-Bao gồm:
-
-- Project Setup.
-- Docker.
-- MySQL.
-- Redis.
-- Flyway.
-- Swagger.
-- Common Response.
-
-Trạng thái:
-
 ```text
-Chưa bắt đầu
+POST /api/ai/chat
+
+GET /api/ai/sessions
+
+GET /api/ai/sessions/{id}/messages
+
+DELETE /api/ai/sessions/{id}
 ```
 
 ---
 
-## Milestone 2 — Core Finance
+## Chat 31 — AI Protection
 
-Bao gồm:
+### Chức năng
 
-- Authentication.
-- Category.
-- Transaction.
-
-Trạng thái:
-
-```text
-Chưa bắt đầu
-```
+* Redis Rate Limit.
+* Timeout.
+* Retry.
+* Ollama unavailable.
+* Prompt length validation.
+* Chat History limit.
+* Model error handling.
 
 ---
 
-## Milestone 3 — Financial Analysis
+## Chat 32 — AI Test
 
-Bao gồm:
-
-- Budget.
-- Notification.
-- Dashboard.
-
-Trạng thái:
+### File
 
 ```text
-Chưa bắt đầu
+ai/service/AiChatServiceImplTest.java
+
+ai/context/FinancialContextServiceImplTest.java
+
+ai/client/OllamaClientTest.java
+
+ai/controller/AiChatControllerIntegrationTest.java
 ```
 
----
-
-## Milestone 4 — AI Integration
-
-Bao gồm:
-
-- Chat Session.
-- Chat Message.
-- Financial Context.
-- Prompt Builder.
-- AI Provider.
-
-Trạng thái:
+### Test
 
 ```text
-Chưa bắt đầu
-```
-
----
-
-## Milestone 5 — Portfolio Release
-
-Bao gồm:
-
-- Export.
-- Testing.
-- Docker.
-- Documentation.
-- Demo.
-- CV.
-
-Trạng thái:
-
-```text
-Chưa bắt đầu
-```
-
----
-
-# 17. Definition of Done
-
-Một chức năng chỉ được xem là hoàn thành khi đáp ứng đầy đủ:
-
-- [ ] Code đúng kiến trúc.
-- [ ] Business Rules được xử lý.
-- [ ] Validation đầy đủ.
-- [ ] Kiểm tra quyền sở hữu.
-- [ ] Không trả Entity trực tiếp.
-- [ ] Exception có Error Code.
-- [ ] Swagger được cập nhật.
-- [ ] Có Unit Test hoặc Integration Test phù hợp.
-- [ ] Không có secret trong mã nguồn.
-- [ ] Code đã được review lại.
-- [ ] Tài liệu liên quan được cập nhật.
-- [ ] Chức năng chạy được trong môi trường Docker hoặc Development.
-
----
-
-# 18. Cách theo dõi tiến độ
-
-Có thể sử dụng GitHub Projects với các cột:
-
-```text
-Backlog
-
-Ready
-
-In Progress
-
-Review
-
-Testing
-
-Done
-```
-
-Mỗi task nên có:
-
-- Tên rõ ràng.
-- Module.
-- Mô tả.
-- Acceptance Criteria.
-- Branch.
-- Pull Request.
-- Trạng thái.
-
-Ví dụ task:
-
-```text
-Tên:
-Create Transaction API
-
-Module:
-Transaction
-
-Acceptance Criteria:
-- Tạo được INCOME.
-- Tạo được EXPENSE.
-- amount > 0.
-- Category đúng type.
-- Không cho dùng Category của người khác.
-- Có Swagger.
-- Có test.
-```
-
----
-
-# 19. Branch Strategy
-
-Các branch chính:
-
-```text
-main
-
-develop
-```
-
-Feature branch:
-
-```text
-feature/authentication
-
-feature/category
-
-feature/transaction
-
-feature/budget
-
-feature/dashboard
-
-feature/ai-assistant
-```
-
-Bug fix:
-
-```text
-fix/transaction-filter
-
-fix/refresh-token
-```
-
-Quy trình:
-
-```text
-feature branch
-      │
-      ▼
-Pull Request
-      │
-      ▼
-develop
-      │
-      ▼
-main
-```
-
-Với project cá nhân, có thể bỏ `develop` nếu muốn đơn giản và merge trực tiếp feature branch vào `main` qua Pull Request.
-
----
-
-# 20. Thứ tự ưu tiên
-
-## Ưu tiên bắt buộc
-
-1. Authentication.
-2. Category.
-3. Transaction.
-4. Budget.
-5. Dashboard.
-6. AI Assistant.
-
-## Ưu tiên nên có
-
-7. Notification.
-8. Export.
-9. Redis Cache.
-10. Docker.
-
-## Có thể làm sau
-
-- OCR hóa đơn.
-- Voice Input.
-- Mobile App.
-- Google Login.
-- CI/CD nâng cao.
-- Cloud Deployment.
-- Dự báo chi tiêu.
-
----
-
-# 21. Phương án rút gọn khi thiếu thời gian
-
-Nếu không đủ thời gian, giữ lại:
-
-- Authentication.
-- Category.
-- Transaction.
-- Budget.
-- Dashboard.
-- AI Chat cơ bản.
-- Swagger.
-- Docker.
-- README.
-
-Có thể tạm hoãn:
-
-- User Session UI.
-- Export Excel.
-- AI Structured Output.
-- Circuit Breaker.
-- Thông báo cuối tháng.
-- Test Coverage cao.
-- Cloud Deployment.
-
-Không nên bỏ:
-
-- Kiểm tra quyền sở hữu.
-- Validation.
-- Soft Delete.
-- Business Rules.
-- Error Handling.
-- Bảo mật JWT.
-
----
-
-# 22. Phiên bản phát hành
-
-## Version 0.1.0
-
-```text
-Project Setup
+Financial Context
+Cache Hit
+Cache Miss
+Ownership
+Prompt
+Chat Persistence
+Ollama Mock
+Timeout
+Provider unavailable
+Rate Limit
 Authentication
 ```
 
-## Version 0.2.0
-
-```text
-Category
-Transaction
-```
-
-## Version 0.3.0
-
-```text
-Budget
-Notification
-Dashboard
-```
-
-## Version 0.4.0
-
-```text
-AI Assistant
-```
-
-## Version 0.5.0
-
-```text
-Export
-Testing
-Docker
-Documentation
-```
-
-## Version 1.0.0
-
-```text
-Portfolio Release
-```
-
 ---
 
-# 23. Tổng kết
-
-SmartSpend được phát triển theo lộ trình từ nền tảng đến nghiệp vụ cốt lõi, sau đó mới tích hợp AI và hoàn thiện Portfolio.
-
-Thứ tự phát triển chính:
+# 12. Luồng phát triển SmartSpend sau cập nhật
 
 ```text
-Project Setup
-      │
-      ▼
 Authentication
-      │
-      ▼
+      ↓
 Category
-      │
-      ▼
+      ↓
 Transaction
-      │
-      ▼
+      ↓
 Budget
-      │
-      ▼
-Dashboard
-      │
-      ▼
+      ↓
+Budget Alert
+      ↓
 Notification
-      │
-      ▼
-AI Assistant
-      │
-      ▼
+      ↓
+Dashboard
+      ↓
+Dashboard Test
+      ↓
+Local AI Infrastructure
+      ↓
+Ollama
+      ↓
+Financial Context
+      ↓
+Prompt Builder
+      ↓
+Local LLM
+      ↓
+AI Chat
+      ↓
+AI Test
+      ↓
 Export
-      │
-      ▼
-Testing
-      │
-      ▼
+      ↓
+Testing & Optimization
+      ↓
 Portfolio Release
 ```
 
-Mục tiêu cuối cùng không chỉ là hoàn thành một ứng dụng quản lý thu chi, mà còn xây dựng một dự án thể hiện rõ năng lực:
+Mục tiêu AI:
 
-- Phân tích nghiệp vụ.
-- Thiết kế cơ sở dữ liệu.
-- Xây dựng REST API.
-- Bảo mật với Spring Security và JWT.
-- Làm việc với MySQL và Redis.
-- Tích hợp AI Provider.
-- Viết kiểm thử.
-- Docker hóa ứng dụng.
-- Tổ chức mã nguồn và tài liệu chuyên nghiệp.
+```text
+SmartSpend
+    ↓
+MySQL + Redis
+    ↓
+Spring Boot
+    ↓
+Ollama
+    ↓
+Local LLM
+```
+
+Không phụ thuộc:
+
+```text
+OpenAI API
+Gemini API
+Cloud LLM API
+```

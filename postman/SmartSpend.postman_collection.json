@@ -1,0 +1,73 @@
+{
+  "info": {
+    "_postman_id": "d5d4d9b7-1e42-4a46-9a7c-6bb6d707c2a1",
+    "name": "SmartSpend",
+    "description": "Postman Collection cho SmartSpend AI Personal Finance Manager.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Common",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            },
+            "description": "Kiểm tra SmartSpend Backend đang hoạt động."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": []
+    },
+    {
+      "name": "Category",
+      "item": []
+    },
+    {
+      "name": "Transaction",
+      "item": []
+    },
+    {
+      "name": "Budget",
+      "item": []
+    },
+    {
+      "name": "Notification",
+      "item": []
+    },
+    {
+      "name": "Dashboard",
+      "item": []
+    },
+    {
+      "name": "AI Assistant",
+      "item": []
+    },
+    {
+      "name": "Export",
+      "item": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    }
+  ]
+}

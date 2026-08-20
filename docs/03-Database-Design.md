@@ -1,215 +1,108 @@
-# Thiết kế cơ sở dữ liệu
+# Database Design
 
-# SmartSpend
+## SmartSpend
 
 ### AI Personal Finance Manager
 
 ---
 
-# 1. Giới thiệu
+# 1. Mục đích
 
-## 1.1 Mục đích
-
-Tài liệu này mô tả thiết kế cơ sở dữ liệu của hệ thống **SmartSpend**.
+Tài liệu này mô tả thiết kế cơ sở dữ liệu của hệ thống SmartSpend.
 
 Đây là tài liệu dùng làm cơ sở để:
 
 - Thiết kế Entity.
-- Xây dựng Migration bằng Flyway.
+- Xây dựng Flyway Migration.
 - Phát triển Repository.
-- Thiết kế REST API.
-- Đảm bảo dữ liệu luôn nhất quán.
+- Thiết kế API.
+- Kiểm tra tính toàn vẹn dữ liệu.
 
-Mọi thay đổi về cấu trúc dữ liệu đều phải được cập nhật trong tài liệu này trước khi triển khai vào mã nguồn.
-
----
-
-## 1.2 Phạm vi
-
-Phiên bản hiện tại của SmartSpend chỉ tập trung vào việc quản lý tài chính cá nhân.
-
-Hệ thống **không** hỗ trợ:
-
-- Ví điện tử
-- Chuyển tiền
-- Thanh toán trực tuyến
-- Ngân hàng số
-- Đầu tư tài chính
-
-Do đó cơ sở dữ liệu được thiết kế đơn giản, dễ mở rộng và phù hợp với phạm vi của dự án.
+Mọi thay đổi về cấu trúc cơ sở dữ liệu phải được cập nhật trong tài liệu này trước khi triển khai.
 
 ---
 
-# 2. Mục tiêu thiết kế
+# 2. Quy ước Database
 
-Cơ sở dữ liệu được thiết kế theo các mục tiêu sau:
+## 2.1 Database Engine
 
-- Chuẩn hóa dữ liệu.
-- Giảm trùng lặp.
-- Dễ mở rộng.
-- Dễ bảo trì.
-- Đảm bảo tính toàn vẹn dữ liệu.
-- Phù hợp với Spring Data JPA.
+Hệ quản trị cơ sở dữ liệu:
+
+```
+MySQL 8.x
+```
+
+Storage Engine:
+
+```
+InnoDB
+```
+
+Character Set:
+
+```
+utf8mb4
+```
+
+Collation:
+
+```
+utf8mb4_unicode_ci
+```
 
 ---
 
-# 3. Nguyên tắc thiết kế
+## 2.2 Quy ước đặt tên
 
-## 3.1 Chuẩn hóa dữ liệu
+### Tên bảng
 
-Các bảng được thiết kế theo hướng chuẩn hóa để hạn chế dữ liệu trùng lặp.
+- Tiếng Anh.
+- Chữ thường.
+- Dạng số nhiều.
 
 Ví dụ:
-
-- Danh mục được lưu riêng.
-- Người dùng được lưu riêng.
-- Giao dịch chỉ tham chiếu đến các bảng liên quan.
-
----
-
-## 3.2 Mỗi bảng chỉ có một trách nhiệm
-
-Mỗi bảng chỉ đại diện cho một thực thể trong hệ thống.
-
-Ví dụ:
-
-| Bảng | Vai trò |
-|------|----------|
-| users | Thông tin người dùng |
-| categories | Danh mục |
-| transactions | Giao dịch |
-| budgets | Ngân sách |
-
-Không tạo một bảng chứa nhiều loại dữ liệu khác nhau.
-
----
-
-## 3.3 Sử dụng khóa chính
-
-Mỗi bảng đều sử dụng:
-
-```
-BIGINT AUTO_INCREMENT
-```
-
-làm khóa chính.
-
-Ví dụ
-
-```
-id
-```
-
----
-
-## 3.4 Sử dụng khóa ngoại
-
-Quan hệ giữa các bảng được quản lý bằng Foreign Key.
-
-Ví dụ
-
-```
-transaction
-
-↓
-
-user
-
-↓
-
-category
-```
-
-Điều này giúp đảm bảo dữ liệu luôn hợp lệ.
-
----
-
-## 3.5 Soft Delete
-
-Đối với dữ liệu nghiệp vụ quan trọng, hệ thống không xóa vật lý.
-
-Thay vào đó sử dụng:
-
-```
-deleted_at
-```
-
-để đánh dấu dữ liệu đã bị xóa.
-
-Các truy vấn mặc định sẽ bỏ qua dữ liệu này.
-
----
-
-## 3.6 Audit Fields
-
-Các bảng nghiệp vụ đều lưu thông tin:
-
-- created_at
-- updated_at
-
-Một số bảng sẽ có thêm
-
-- deleted_at
-
-để phục vụ Soft Delete.
-
----
-
-# 4. Quy ước đặt tên
-
-## 4.1 Tên bảng
-
-Tên bảng sử dụng:
-
-- tiếng Anh
-- chữ thường
-- số nhiều
-
-Ví dụ
 
 ```
 users
-
-transactions
-
 categories
-
+transactions
 budgets
+notifications
 ```
 
 ---
 
-## 4.2 Tên cột
+### Tên cột
 
-Tên cột sử dụng:
-
-snake_case
-
-Ví dụ
+Sử dụng:
 
 ```
-first_name
+snake_case
+```
 
+Ví dụ:
+
+```
 created_at
+
+updated_at
 
 transaction_date
 ```
 
 ---
 
-## 4.3 Khóa chính
+### Primary Key
 
-Tất cả các bảng đều sử dụng
+Tất cả các bảng sử dụng:
 
 ```
-id
+id BIGINT AUTO_INCREMENT
 ```
-
-làm Primary Key.
 
 ---
 
-## 4.4 Khóa ngoại
+### Foreign Key
 
 Tên khóa ngoại theo quy tắc:
 
@@ -217,27 +110,68 @@ Tên khóa ngoại theo quy tắc:
 <tên_bảng>_id
 ```
 
-Ví dụ
+Ví dụ:
 
 ```
 user_id
 
 category_id
 
-budget_id
+session_id
 ```
 
 ---
 
-## 4.5 Timestamp
+## 2.3 Kiểu dữ liệu
 
-Toàn bộ Timestamp sử dụng
+### ID
 
 ```
-TIMESTAMP
+BIGINT
 ```
 
-Ví dụ
+---
+
+### Chuỗi
+
+```
+VARCHAR
+```
+
+---
+
+### Văn bản dài
+
+```
+TEXT
+```
+
+---
+
+### Tiền tệ
+
+```
+DECIMAL(15,2)
+```
+
+Không sử dụng:
+
+- FLOAT
+- DOUBLE
+
+để tránh sai số.
+
+---
+
+### Thời gian
+
+Toàn bộ thời gian sử dụng:
+
+```
+DATETIME(6)
+```
+
+Các trường chuẩn:
 
 ```
 created_at
@@ -249,85 +183,130 @@ deleted_at
 
 ---
 
-# 5. Danh sách Entity
+### Boolean
 
-Phiên bản hiện tại của SmartSpend bao gồm 10 thực thể chính.
+```
+BOOLEAN
+```
 
-| STT | Entity | Vai trò |
-|-----|---------|----------|
-| 1 | User | Quản lý tài khoản người dùng |
-| 2 | Category | Danh mục thu và chi |
-| 3 | Transaction | Giao dịch tài chính |
-| 4 | Budget | Ngân sách theo danh mục |
-| 5 | Notification | Thông báo hệ thống |
-| 6 | Chat Session | Phiên hội thoại AI |
-| 7 | Chat Message | Nội dung hội thoại |
-| 8 | Refresh Token | Làm mới JWT |
-| 9 | User Session | Quản lý phiên đăng nhập |
 ---
 
-# 6. Quan hệ giữa các Entity
+### JSON
+
+Chỉ sử dụng khi thật sự cần.
+
+Hiện tại:
+
+```
+chat_messages.raw_ai_response
+```
+
+---
+
+## 2.4 Soft Delete
+
+Chỉ áp dụng cho:
+
+```
+transactions
+```
+
+Bảng sử dụng trường:
+
+```
+deleted_at
+```
+
+Các bảng còn lại sử dụng xóa vật lý.
+
+---
+
+# 3. Danh sách bảng
+
+Phiên bản đầu của SmartSpend gồm 9 bảng.
+
+| STT | Bảng | Vai trò |
+|----:|------|----------|
+| 1 | users | Quản lý tài khoản |
+| 2 | categories | Danh mục thu và chi |
+| 3 | transactions | Giao dịch tài chính |
+| 4 | budgets | Ngân sách |
+| 5 | notifications | Thông báo |
+| 6 | chat_sessions | Phiên hội thoại AI |
+| 7 | chat_messages | Nội dung hội thoại |
+| 8 | refresh_tokens | Refresh Token |
+| 9 | user_sessions | Phiên đăng nhập |
+
+---
+
+# 4. Quan hệ tổng thể
+
+```
+users
+│
+├── categories
+│      │
+│      ├── transactions
+│      │
+│      └── budgets
+│
+├── transactions
+│
+├── budgets
+│
+├── notifications
+│
+├── chat_sessions
+│      │
+│      └── chat_messages
+│
+├── refresh_tokens
+│
+└── user_sessions
+```
+
+---
+
+# 5. Quy tắc thiết kế
 
 ## User
 
-Một người dùng có thể:
+Một User có thể có nhiều:
 
-- Có nhiều Category.
-- Có nhiều Transaction.
-- Có nhiều Budget.
-- Có nhiều Notification.
-- Có nhiều Chat Session.
-- Có nhiều User Session.
-- Có nhiều Refresh Token.
-
-Quan hệ:
-
-```
-User
-
-├── Category
-
-├── Transaction
-
-├── Budget
-
-├── Notification
-
-├── Chat Session
-
-├── Refresh Token
-
-└── User Session
-```
+- Category
+- Transaction
+- Budget
+- Notification
+- Chat Session
+- Refresh Token
+- User Session
 
 ---
 
 ## Category
 
-Một Category
+Một Category:
 
-- Thuộc một User.
+- Thuộc một User hoặc là Category mặc định của hệ thống.
 - Có nhiều Transaction.
-- Có thể có nhiều Budget theo từng tháng.
+- Có nhiều Budget theo từng tháng.
 
 ---
 
 ## Transaction
 
-Một Transaction
+Một Transaction:
 
 - Thuộc một User.
 - Thuộc một Category.
 
-Đây là bảng trung tâm của toàn bộ hệ thống.
-
-Dashboard, Budget và AI đều đọc dữ liệu từ bảng này.
+Đây là bảng trung tâm của hệ thống.
 
 ---
 
 ## Budget
 
-Một Budget
+Một Budget:
 
 - Thuộc một User.
 - Thuộc một Category.
@@ -337,21 +316,15 @@ Một Budget
 
 ## Notification
 
-Một Notification
+Một Notification:
 
 - Thuộc một User.
-
-Được tạo từ:
-
-- Budget
-- AI
-- Hệ thống
 
 ---
 
 ## Chat Session
 
-Một Chat Session
+Một Chat Session:
 
 - Thuộc một User.
 - Có nhiều Chat Message.
@@ -360,773 +333,741 @@ Một Chat Session
 
 ## Chat Message
 
-Một Chat Message
+Một Chat Message:
 
 - Thuộc một Chat Session.
-
-Bao gồm:
-
-- Câu hỏi.
-- Trả lời.
 
 ---
 
 ## Refresh Token
 
-Một Refresh Token
+Một Refresh Token:
 
 - Thuộc một User.
-
-Được sử dụng để cấp Access Token mới.
 
 ---
 
 ## User Session
 
-Một User Session
+Một User Session:
 
 - Thuộc một User.
 
-Lưu thông tin:
-
-- Thiết bị
-- Địa chỉ IP
-- Thời điểm đăng nhập
-
 ---
 
-## Password Reset Token
+# 6. Nguyên tắc Migration
 
-Một Password Reset Token
+Flyway được sử dụng để quản lý toàn bộ thay đổi Database.
 
-- Thuộc một User.
-
-Được sử dụng khi người dùng quên mật khẩu.
-
----
-
-# 7. Luồng dữ liệu
-
-Transaction là trung tâm của hệ thống.
-
-Mọi chức năng phân tích đều được xây dựng từ dữ liệu giao dịch.
+Quy tắc đặt tên:
 
 ```
-Transaction
-      │
-      ├────────► Dashboard
-      │
-      ├────────► Budget
-      │
-      ├────────► Notification
-      │
-      └────────► AI Assistant
+V1__create_initial_schema.sql
+
+V2__insert_default_categories.sql
+
+V3__...
+
+V4__...
 ```
 
-Điều này giúp tránh việc lưu trữ dữ liệu trùng lặp.
+Không sửa Migration đã chạy trên môi trường Production.
 
-Dashboard, Budget và AI chỉ đọc dữ liệu từ Transaction thay vì tạo thêm các bảng thống kê riêng.
+Mọi thay đổi cấu trúc phải tạo Migration mới.
 
 ---
 
-# 8. Tổng quan mô hình dữ liệu
+# 7. Thiết kế chi tiết các bảng
 
-```text
-User
- │
- ├────────────── Category
- │                  │
- │                  │
- │                  ▼
- │             Transaction
- │                  │
- │                  ├────────► Dashboard
- │                  ├────────► Budget
- │                  ├────────► Notification
- │                  └────────► AI
- │
- ├────────────── Budget
- │
- ├────────────── Notification
- │
- ├────────────── Chat Session
- │                  │
- │                  ▼
- │             Chat Message
- │
- ├────────────── Refresh Token
- │
- ├────────────── User Session
- │
- └────────────── Password Reset Token
-```
-
-Đây là mô hình dữ liệu tổng thể của SmartSpend.
-
-Các phần tiếp theo sẽ mô tả chi tiết cấu trúc của từng bảng, bao gồm:
-
-- Mục đích
-- Thuộc tính
-- Quan hệ
-- Ràng buộc
-- Chỉ mục
-- Business Rule liên quan
-
----
-
-# 9. Thiết kế chi tiết các bảng
-
-## 9.1 Bảng Users
+## 7.1 Bảng `users`
 
 ### Mục đích
 
-Lưu trữ thông tin tài khoản của người dùng.
-
-Đây là bảng trung tâm của toàn bộ hệ thống.
-
----
-
-### Business Rules liên quan
-
-- AUTH-001
-- AUTH-002
-- AUTH-003
-- AUTH-004
-- AUTH-006
+Lưu thông tin tài khoản người dùng.
 
 ---
 
 ### Cấu trúc bảng
 
 | Cột | Kiểu dữ liệu | Null | Mô tả |
-|------|--------------|------|-------|
+|------|--------------|:---:|-------|
 | id | BIGINT | ❌ | Khóa chính |
 | email | VARCHAR(255) | ❌ | Email đăng nhập |
-| password | VARCHAR(255) | ❌ | Mật khẩu đã mã hóa |
+| password_hash | VARCHAR(255) | ❌ | Mật khẩu đã mã hóa |
 | full_name | VARCHAR(100) | ❌ | Họ và tên |
 | avatar_url | VARCHAR(500) | ✅ | Ảnh đại diện |
-| created_at | TIMESTAMP | ❌ | Ngày tạo |
-| updated_at | TIMESTAMP | ❌ | Ngày cập nhật |
+| role | VARCHAR(20) | ❌ | USER, ADMIN |
+| status | VARCHAR(20) | ❌ | ACTIVE, INACTIVE, LOCKED |
+| auth_provider | VARCHAR(20) | ❌ | LOCAL, GOOGLE |
+| created_at | DATETIME(6) | ❌ | Ngày tạo |
+| updated_at | DATETIME(6) | ❌ | Ngày cập nhật |
 
 ---
 
-### Quan hệ
+### Primary Key
 
-```
-User
-
-├── Category
-
-├── Transaction
-
-├── Budget
-
-├── Notification
-
-├── Chat Session
-
-├── Refresh Token
-
-└── User Session
-```
-
----
-
-### Ràng buộc
-
-- Email phải duy nhất.
-- Password phải được mã hóa bằng BCrypt.
-- Không lưu mật khẩu dạng văn bản thuần.
-
----
-
-### Chỉ mục
-
-```
+```sql
 PRIMARY KEY (id)
+```
 
+---
+
+### Unique
+
+```sql
+UNIQUE KEY uk_users_email (email)
+```
+
+---
+
+### Index
+
+```sql
 UNIQUE (email)
 ```
 
 ---
 
-## 9.2 Bảng Categories
+### Quan hệ
 
-### Mục đích
+```text
+users (1)
 
-Quản lý các danh mục thu nhập và chi tiêu.
+├── categories (N)
 
-Danh mục giúp phân loại giao dịch để phục vụ Dashboard, Budget và AI.
+├── transactions (N)
+
+├── budgets (N)
+
+├── notifications (N)
+
+├── chat_sessions (N)
+
+├── refresh_tokens (N)
+
+└── user_sessions (N)
+```
 
 ---
 
-### Business Rules liên quan
+## 7.2 Bảng `categories`
 
-- CAT-001
-- CAT-002
-- CAT-003
-- CAT-004
-- CAT-005
-- CAT-006
+### Mục đích
+
+Lưu danh mục thu nhập và chi tiêu.
 
 ---
 
 ### Cấu trúc bảng
 
 | Cột | Kiểu dữ liệu | Null | Mô tả |
-|------|--------------|------|-------|
+|------|--------------|:---:|-------|
 | id | BIGINT | ❌ | Khóa chính |
-| user_id | BIGINT | ❌ | Chủ sở hữu |
+| user_id | BIGINT | ✅ | Chủ sở hữu |
 | name | VARCHAR(100) | ❌ | Tên danh mục |
-| type | ENUM | ❌ | INCOME / EXPENSE |
-| icon | VARCHAR(100) | ✅ | Biểu tượng |
-| color | VARCHAR(20) | ✅ | Màu hiển thị |
+| type | VARCHAR(20) | ❌ | INCOME, EXPENSE |
+| icon | VARCHAR(100) | ✅ | Icon |
+| color | VARCHAR(20) | ✅ | Màu |
 | is_default | BOOLEAN | ❌ | Danh mục mặc định |
-| created_at | TIMESTAMP | ❌ | Ngày tạo |
-| updated_at | TIMESTAMP | ❌ | Ngày cập nhật |
+| created_at | DATETIME(6) | ❌ | Ngày tạo |
+| updated_at | DATETIME(6) | ❌ | Ngày cập nhật |
+
+---
+
+### Primary Key
+
+```sql
+PRIMARY KEY (id)
+```
+
+---
+
+### Foreign Key
+
+```sql
+FOREIGN KEY (user_id)
+REFERENCES users(id)
+```
+
+---
+
+### Unique
+
+```sql
+UNIQUE KEY uk_categories_user_name_type
+(
+    user_id,
+    name,
+    type
+)
+```
+
+---
+
+### Index
+
+```sql
+INDEX idx_categories_user_id
+(user_id)
+
+INDEX idx_categories_type
+(type)
+
+INDEX idx_categories_default
+(is_default)
+```
 
 ---
 
 ### Quan hệ
 
-```
-User (1)
+```text
+users (1)
 
 ↓
 
-Category (N)
+categories (N)
 
 ↓
 
-Transaction (N)
+transactions (N)
 
 ↓
 
-Budget (N)
+budgets (N)
 ```
 
 ---
 
-### Ràng buộc
-
-- Chỉ có hai loại:
-
-```
-INCOME
-
-EXPENSE
-```
-
-- Không được trùng tên trong cùng một loại.
-- Không được xóa Category đang được Transaction sử dụng.
-
----
-
-### Chỉ mục
-
-```
-INDEX(user_id)
-
-INDEX(type)
-
-UNIQUE(user_id, name, type)
-```
-
----
-
-## 9.3 Bảng Transactions
+## 7.3 Bảng `transactions`
 
 ### Mục đích
 
-Lưu toàn bộ các khoản thu và chi của người dùng.
+Lưu toàn bộ giao dịch thu và chi.
 
-Đây là bảng quan trọng nhất của hệ thống.
-
-Dashboard, Budget và AI đều sử dụng dữ liệu từ bảng này.
-
----
-
-### Business Rules liên quan
-
-- TRAN-001 → TRAN-010
+Đây là bảng trung tâm của hệ thống.
 
 ---
 
 ### Cấu trúc bảng
 
 | Cột | Kiểu dữ liệu | Null | Mô tả |
-|------|--------------|------|-------|
+|------|--------------|:---:|-------|
 | id | BIGINT | ❌ | Khóa chính |
 | user_id | BIGINT | ❌ | Chủ sở hữu |
 | category_id | BIGINT | ❌ | Danh mục |
-| type | ENUM | ❌ | INCOME / EXPENSE |
+| type | VARCHAR(20) | ❌ | INCOME, EXPENSE |
 | amount | DECIMAL(15,2) | ❌ | Số tiền |
-| note | TEXT | ✅ | Ghi chú |
-| transaction_date | DATE | ❌ | Ngày phát sinh |
-| created_at | TIMESTAMP | ❌ | Ngày tạo |
-| updated_at | TIMESTAMP | ❌ | Ngày cập nhật |
-| deleted_at | TIMESTAMP | ✅ | Soft Delete |
+| merchant | VARCHAR(255) | ✅ | Nơi giao dịch |
+| payment_method | VARCHAR(20) | ✅ | CASH, BANK, EWALLET |
+| note | VARCHAR(500) | ✅ | Ghi chú |
+| transaction_date | DATE | ❌ | Ngày giao dịch |
+| created_at | DATETIME(6) | ❌ | Ngày tạo |
+| updated_at | DATETIME(6) | ❌ | Ngày cập nhật |
+| deleted_at | DATETIME(6) | ✅ | Soft Delete |
+
+---
+
+### Primary Key
+
+```sql
+PRIMARY KEY (id)
+```
+
+---
+
+### Foreign Key
+
+```sql
+FOREIGN KEY (user_id)
+REFERENCES users(id)
+
+FOREIGN KEY (category_id)
+REFERENCES categories(id)
+```
+
+---
+
+### Index
+
+```sql
+INDEX idx_transactions_user_date
+(
+    user_id,
+    transaction_date
+)
+
+INDEX idx_transactions_user_category
+(
+    user_id,
+    category_id
+)
+
+INDEX idx_transactions_deleted
+(
+    deleted_at
+)
+
+INDEX idx_transactions_type
+(
+    type
+)
+```
 
 ---
 
 ### Quan hệ
 
-```
-User (1)
+```text
+users (1)
 
 ↓
 
-Transaction (N)
+transactions (N)
 
-Category (1)
+categories (1)
 
 ↓
 
-Transaction (N)
+transactions (N)
 ```
 
 ---
 
-### Ràng buộc
+### Ghi chú
 
-- amount > 0
-- Không tạo Transaction trong tương lai.
-- Category phải cùng loại với Transaction.
-- Không xóa vật lý.
+- Chỉ áp dụng Soft Delete cho bảng này.
+- Dashboard, Budget và AI đều đọc dữ liệu từ bảng `transactions`.
+- Không lưu số dư tài khoản trong Database.
 
----
-
-### Chỉ mục
-
-```
-INDEX(user_id)
-
-INDEX(category_id)
-
-INDEX(transaction_date)
-
-INDEX(type)
-```
-
----
-
-## 9.4 Bảng Budgets
+## 7.4 Bảng `budgets`
 
 ### Mục đích
 
-Quản lý ngân sách theo từng danh mục trong từng tháng.
-
----
-
-### Business Rules liên quan
-
-- BUD-001 → BUD-007
+Lưu ngân sách của người dùng theo từng danh mục và từng tháng.
 
 ---
 
 ### Cấu trúc bảng
 
 | Cột | Kiểu dữ liệu | Null | Mô tả |
-|------|--------------|------|-------|
+|------|--------------|:---:|-------|
 | id | BIGINT | ❌ | Khóa chính |
 | user_id | BIGINT | ❌ | Chủ sở hữu |
 | category_id | BIGINT | ❌ | Danh mục |
-| budget_month | DATE | ❌ | Tháng áp dụng |
+| budget_year | INT | ❌ | Năm áp dụng |
+| budget_month | TINYINT | ❌ | Tháng áp dụng |
 | amount | DECIMAL(15,2) | ❌ | Ngân sách |
-| created_at | TIMESTAMP | ❌ | Ngày tạo |
-| updated_at | TIMESTAMP | ❌ | Ngày cập nhật |
+| created_at | DATETIME(6) | ❌ | Ngày tạo |
+| updated_at | DATETIME(6) | ❌ | Ngày cập nhật |
+
+---
+
+### Primary Key
+
+```sql
+PRIMARY KEY (id)
+```
+
+---
+
+### Foreign Key
+
+```sql
+FOREIGN KEY (user_id)
+REFERENCES users(id)
+
+FOREIGN KEY (category_id)
+REFERENCES categories(id)
+```
+
+---
+
+### Unique
+
+```sql
+UNIQUE KEY uk_budgets_user_category_month
+(
+    user_id,
+    category_id,
+    budget_year,
+    budget_month
+)
+```
+
+---
+
+### Index
+
+```sql
+INDEX idx_budgets_user_month
+(
+    user_id,
+    budget_year,
+    budget_month
+)
+
+INDEX idx_budgets_category
+(
+    category_id
+)
+```
 
 ---
 
 ### Quan hệ
 
-```
-User
+```text
+users (1)
 
 ↓
 
-Budget
+budgets (N)
 
-Category
+categories (1)
 
 ↓
 
-Budget
+budgets (N)
 ```
 
 ---
 
-### Ràng buộc
-
-- Chỉ áp dụng cho Category loại Expense.
-- Một Category chỉ có một Budget trong cùng một tháng.
-- amount > 0
-
----
-
-### Chỉ mục
-
-```
-INDEX(user_id)
-
-INDEX(category_id)
-
-UNIQUE(category_id, budget_month)
-```
-
----
-
-## 9.5 Bảng Notifications
+## 7.5 Bảng `notifications`
 
 ### Mục đích
 
 Lưu các thông báo của hệ thống.
 
-Ví dụ
-
-- Vượt ngân sách
-- Thông báo AI
-- Báo cáo cuối tháng
-
----
-
-### Business Rules liên quan
-
-- NOTI-001 → NOTI-004
-
 ---
 
 ### Cấu trúc bảng
 
 | Cột | Kiểu dữ liệu | Null | Mô tả |
-|------|--------------|------|-------|
+|------|--------------|:---:|-------|
 | id | BIGINT | ❌ | Khóa chính |
 | user_id | BIGINT | ❌ | Chủ sở hữu |
 | title | VARCHAR(200) | ❌ | Tiêu đề |
 | content | TEXT | ❌ | Nội dung |
-| type | ENUM | ❌ | BUDGET / AI / SYSTEM |
+| type | VARCHAR(20) | ❌ | BUDGET, AI, SYSTEM |
+| action_url | VARCHAR(255) | ✅ | Liên kết điều hướng |
 | is_read | BOOLEAN | ❌ | Đã đọc |
-| created_at | TIMESTAMP | ❌ | Ngày tạo |
+| created_at | DATETIME(6) | ❌ | Ngày tạo |
 
 ---
 
-### Quan hệ
-
-```
-User
-
-↓
-
-Notification
-```
-
----
-
-### Chỉ mục
-
-```
-INDEX(user_id)
-
-INDEX(is_read)
-
-INDEX(type)
-```
-
----
-
-## 10. Kết luận phần 2
-
-Năm bảng trên tạo thành phần lõi của SmartSpend.
-
-Trong đó:
-
-- **Users** quản lý tài khoản.
-- **Categories** phân loại giao dịch.
-- **Transactions** lưu dữ liệu tài chính.
-- **Budgets** theo dõi ngân sách.
-- **Notifications** gửi cảnh báo và thông báo.
-
-Các bảng còn lại (Chat Session, Chat Message, Refresh Token và User Session) sẽ được thiết kế ở phần tiếp theo.
-
----
-
-# 11. Thiết kế các bảng hỗ trợ
-
-## 11.1 Bảng `chat_sessions`
-
-### Mục đích
-
-Lưu các phiên hội thoại giữa người dùng và AI Financial Assistant.
-
-Mỗi phiên hội thoại đại diện cho một chủ đề trao đổi riêng, giúp người dùng dễ dàng xem lại lịch sử phân tích tài chính.
-
----
-
-### Business Rules liên quan
-
-- AI-001
-- AI-002
-- AI-003
-- AI-005
-
----
-
-### Cấu trúc bảng
-
-| Cột | Kiểu dữ liệu | Null | Mô tả |
-|---|---|---:|---|
-| id | BIGINT | ❌ | Khóa chính |
-| user_id | BIGINT | ❌ | Người sở hữu phiên hội thoại |
-| title | VARCHAR(255) | ✅ | Tiêu đề phiên hội thoại |
-| created_at | DATETIME(6) | ❌ | Thời điểm tạo |
-| updated_at | DATETIME(6) | ❌ | Thời điểm cập nhật gần nhất |
-
----
-
-### Quan hệ
-
-```text
-User (1)
-   │
-   └── Chat Session (N)
-
-Chat Session (1)
-   │
-   └── Chat Message (N)
-```
-
----
-
-### Ràng buộc
-
-- Mỗi phiên hội thoại phải thuộc về một người dùng.
-- Người dùng chỉ được xem và thao tác với phiên hội thoại của chính mình.
-- Tiêu đề có thể được tạo tự động từ tin nhắn đầu tiên.
-- Không lưu dữ liệu tài chính nhạy cảm trực tiếp trong tiêu đề.
-
----
-
-### Chỉ mục
+### Primary Key
 
 ```sql
 PRIMARY KEY (id)
+```
 
-INDEX idx_chat_sessions_user_id (user_id)
+---
 
-INDEX idx_chat_sessions_user_updated (
+### Foreign Key
+
+```sql
+FOREIGN KEY (user_id)
+REFERENCES users(id)
+```
+
+---
+
+### Index
+
+```sql
+INDEX idx_notifications_user_read
+(
     user_id,
-    updated_at
+    is_read
+)
+
+INDEX idx_notifications_created
+(
+    created_at
 )
 ```
 
-Chỉ mục kết hợp `user_id` và `updated_at` hỗ trợ truy vấn danh sách phiên hội thoại gần đây của người dùng.
+---
+
+### Quan hệ
+
+```text
+users (1)
+
+↓
+
+notifications (N)
+```
 
 ---
 
-## 11.2 Bảng `chat_messages`
+## 7.6 Bảng `chat_sessions`
 
 ### Mục đích
 
-Lưu từng tin nhắn trong một phiên hội thoại AI.
-
-Tin nhắn có thể được gửi bởi người dùng hoặc được sinh ra bởi AI Assistant.
-
----
-
-### Business Rules liên quan
-
-- AI-001
-- AI-002
-- AI-003
-- AI-004
-- AI-005
+Lưu các phiên hội thoại giữa người dùng và AI.
 
 ---
 
 ### Cấu trúc bảng
 
 | Cột | Kiểu dữ liệu | Null | Mô tả |
-|---|---|---:|---|
+|------|--------------|:---:|-------|
 | id | BIGINT | ❌ | Khóa chính |
-| session_id | BIGINT | ❌ | Phiên hội thoại chứa tin nhắn |
-| role | VARCHAR(20) | ❌ | Vai trò: `USER` hoặc `ASSISTANT` |
-| content | TEXT | ❌ | Nội dung tin nhắn |
-| raw_ai_response | JSON | ✅ | Phản hồi thô từ AI Provider, phục vụ debug |
-| created_at | DATETIME(6) | ❌ | Thời điểm tạo tin nhắn |
+| user_id | BIGINT | ❌ | Chủ sở hữu |
+| title | VARCHAR(255) | ✅ | Tiêu đề |
+| last_message_at | DATETIME(6) | ✅ | Tin nhắn cuối |
+| created_at | DATETIME(6) | ❌ | Ngày tạo |
+| updated_at | DATETIME(6) | ❌ | Ngày cập nhật |
+
+---
+
+### Primary Key
+
+```sql
+PRIMARY KEY (id)
+```
+
+---
+
+### Foreign Key
+
+```sql
+FOREIGN KEY (user_id)
+REFERENCES users(id)
+```
+
+---
+
+### Index
+
+```sql
+INDEX idx_chat_sessions_user
+(
+    user_id
+)
+
+INDEX idx_chat_sessions_last_message
+(
+    user_id,
+    last_message_at
+)
+```
 
 ---
 
 ### Quan hệ
 
 ```text
-Chat Session (1)
-      │
-      └── Chat Message (N)
+users (1)
+
+↓
+
+chat_sessions (N)
+
+↓
+
+chat_messages (N)
 ```
 
 ---
 
-### Ràng buộc
+## 7.7 Bảng `chat_messages`
 
-- Mỗi tin nhắn phải thuộc về một phiên hội thoại.
-- `role` chỉ nhận một trong hai giá trị:
-  - `USER`
-  - `ASSISTANT`
-- Tin nhắn của người dùng không lưu `raw_ai_response`.
-- Tin nhắn của AI có thể lưu phản hồi thô để hỗ trợ kiểm tra lỗi.
-- Không lưu API Key, Access Token hoặc mật khẩu trong nội dung tin nhắn.
+### Mục đích
+
+Lưu từng tin nhắn trong phiên hội thoại AI.
 
 ---
 
-### Chỉ mục
+### Cấu trúc bảng
+
+| Cột | Kiểu dữ liệu | Null | Mô tả |
+|------|--------------|:---:|-------|
+| id | BIGINT | ❌ | Khóa chính |
+| session_id | BIGINT | ❌ | Phiên hội thoại |
+| role | VARCHAR(20) | ❌ | USER, ASSISTANT |
+| content | TEXT | ❌ | Nội dung |
+| raw_ai_response | JSON | ✅ | Dữ liệu AI trả về |
+| created_at | DATETIME(6) | ❌ | Ngày tạo |
+
+---
+
+### Primary Key
 
 ```sql
 PRIMARY KEY (id)
+```
 
-INDEX idx_chat_messages_session_id (session_id)
+---
 
-INDEX idx_chat_messages_session_created (
+### Foreign Key
+
+```sql
+FOREIGN KEY (session_id)
+REFERENCES chat_sessions(id)
+ON DELETE CASCADE
+```
+
+---
+
+### Index
+
+```sql
+INDEX idx_chat_messages_session
+(
     session_id,
     created_at
 )
 ```
 
-Chỉ mục kết hợp hỗ trợ lấy lịch sử hội thoại theo đúng thứ tự thời gian.
+---
+
+### Quan hệ
+
+```text
+chat_sessions (1)
+
+↓
+
+chat_messages (N)
+```
 
 ---
 
-## 11.3 Bảng `refresh_tokens`
+## 7.8 Bảng `refresh_tokens`
 
 ### Mục đích
 
-Lưu Refresh Token đã được băm để hỗ trợ cấp mới Access Token.
-
-Hệ thống không lưu Refresh Token gốc nhằm hạn chế rủi ro khi cơ sở dữ liệu bị lộ.
-
----
-
-### Business Rules liên quan
-
-- AUTH-004
-- AUTH-005
-- AUTH-007
-- SEC-002
-- SEC-003
+Lưu Refresh Token phục vụ xác thực JWT.
 
 ---
 
 ### Cấu trúc bảng
 
 | Cột | Kiểu dữ liệu | Null | Mô tả |
-|---|---|---:|---|
+|------|--------------|:---:|-------|
 | id | BIGINT | ❌ | Khóa chính |
-| user_id | BIGINT | ❌ | Người sở hữu token |
-| token_hash | VARCHAR(255) | ❌ | Giá trị Refresh Token đã băm |
-| expires_at | DATETIME(6) | ❌ | Thời điểm hết hạn |
-| revoked_at | DATETIME(6) | ✅ | Thời điểm bị thu hồi |
-| created_at | DATETIME(6) | ❌ | Thời điểm cấp token |
+| user_id | BIGINT | ❌ | Chủ sở hữu |
+| token_hash | VARCHAR(255) | ❌ | Token đã băm |
+| device_name | VARCHAR(255) | ✅ | Thiết bị |
+| ip_address | VARCHAR(45) | ✅ | Địa chỉ IP |
+| expires_at | DATETIME(6) | ❌ | Hết hạn |
+| revoked_at | DATETIME(6) | ✅ | Thu hồi |
+| created_at | DATETIME(6) | ❌ | Ngày tạo |
+
+---
+
+### Primary Key
+
+```sql
+PRIMARY KEY (id)
+```
+
+---
+
+### Foreign Key
+
+```sql
+FOREIGN KEY (user_id)
+REFERENCES users(id)
+ON DELETE CASCADE
+```
+
+---
+
+### Unique
+
+```sql
+UNIQUE KEY uk_refresh_tokens_hash
+(
+    token_hash
+)
+```
+
+---
+
+### Index
+
+```sql
+INDEX idx_refresh_tokens_user
+(
+    user_id
+)
+
+INDEX idx_refresh_tokens_expired
+(
+    expires_at
+)
+```
 
 ---
 
 ### Quan hệ
 
 ```text
-User (1)
-   │
-   └── Refresh Token (N)
+users (1)
+
+↓
+
+refresh_tokens (N)
 ```
 
 ---
 
-### Ràng buộc
-
-- Mỗi Refresh Token phải thuộc về một người dùng.
-- Token gốc chỉ được trả về cho Client tại thời điểm cấp.
-- Database chỉ lưu `token_hash`.
-- Token hết hạn hoặc đã bị thu hồi không được sử dụng.
-- Khi thực hiện refresh, token cũ bị thu hồi và token mới được cấp.
-
----
-
-### Chỉ mục
-
-```sql
-PRIMARY KEY (id)
-
-UNIQUE KEY uk_refresh_tokens_token_hash (token_hash)
-
-INDEX idx_refresh_tokens_user_id (user_id)
-
-INDEX idx_refresh_tokens_expires_at (expires_at)
-```
-
----
-
-## 11.4 Bảng `user_sessions`
+## 7.9 Bảng `user_sessions`
 
 ### Mục đích
 
-Lưu thông tin các phiên đăng nhập của người dùng theo thiết bị và địa chỉ IP.
-
-Bảng này hỗ trợ:
-
-- Theo dõi thiết bị đăng nhập.
-- Hiển thị lịch sử đăng nhập.
-- Phát hiện hoạt động bất thường.
-- Thu hồi phiên khi cần.
-
----
-
-### Business Rules liên quan
-
-- AUTH-001
-- AUTH-004
-- AUTH-006
-- SEC-001
-- SEC-004
+Lưu thông tin các phiên đăng nhập của người dùng.
 
 ---
 
 ### Cấu trúc bảng
 
 | Cột | Kiểu dữ liệu | Null | Mô tả |
-|---|---|---:|---|
+|------|--------------|:---:|-------|
 | id | BIGINT | ❌ | Khóa chính |
-| user_id | BIGINT | ❌ | Chủ sở hữu phiên |
-| device_info | VARCHAR(255) | ✅ | Thông tin thiết bị hoặc trình duyệt |
-| ip_address | VARCHAR(45) | ✅ | Địa chỉ IPv4 hoặc IPv6 |
-| last_active_at | DATETIME(6) | ❌ | Lần hoạt động gần nhất |
-| created_at | DATETIME(6) | ❌ | Thời điểm đăng nhập |
+| user_id | BIGINT | ❌ | Chủ sở hữu |
+| device_name | VARCHAR(255) | ✅ | Thiết bị |
+| device_type | VARCHAR(50) | ✅ | MOBILE, TABLET, DESKTOP |
+| os | VARCHAR(100) | ✅ | Hệ điều hành |
+| browser | VARCHAR(100) | ✅ | Trình duyệt |
+| ip_address | VARCHAR(45) | ✅ | Địa chỉ IP |
+| last_active_at | DATETIME(6) | ❌ | Hoạt động cuối |
+| created_at | DATETIME(6) | ❌ | Ngày đăng nhập |
 
 ---
 
-### Quan hệ
+### Primary Key
 
-```text
-User (1)
-   │
-   └── User Session (N)
+```sql
+PRIMARY KEY (id)
 ```
 
 ---
 
-### Ràng buộc
+### Foreign Key
 
-- Mỗi phiên đăng nhập phải thuộc về một người dùng.
-- `ip_address` hỗ trợ tối đa 45 ký tự để lưu cả IPv4 và IPv6.
-- Không lưu mật khẩu hoặc token trong bảng này.
-- `last_active_at` được cập nhật khi người dùng thực hiện hoạt động hợp lệ.
+```sql
+FOREIGN KEY (user_id)
+REFERENCES users(id)
+ON DELETE CASCADE
+```
 
 ---
 
-### Chỉ mục
+### Index
 
 ```sql
-PRIMARY KEY (id)
+INDEX idx_user_sessions_user
+(
+    user_id
+)
 
-INDEX idx_user_sessions_user_id (user_id)
-
-INDEX idx_user_sessions_last_active (
+INDEX idx_user_sessions_last_active
+(
     user_id,
     last_active_at
 )
@@ -1134,443 +1075,273 @@ INDEX idx_user_sessions_last_active (
 
 ---
 
-# 12. Quan hệ giữa các bảng
+### Quan hệ
 
-## 12.1 Quan hệ tổng thể
+```text
+users (1)
+
+↓
+
+user_sessions (N)
+```
+
+# 8. Quan hệ giữa các bảng
+
+## 8.1 Quan hệ tổng thể
 
 | Bảng cha | Quan hệ | Bảng con | Mô tả |
-|---|---|---|---|
-| `users` | 1 - N | `categories` | Một người dùng có nhiều danh mục |
-| `users` | 1 - N | `transactions` | Một người dùng có nhiều giao dịch |
-| `users` | 1 - N | `budgets` | Một người dùng có nhiều ngân sách |
-| `users` | 1 - N | `notifications` | Một người dùng có nhiều thông báo |
-| `users` | 1 - N | `chat_sessions` | Một người dùng có nhiều phiên chat |
-| `users` | 1 - N | `refresh_tokens` | Một người dùng có nhiều Refresh Token |
-| `users` | 1 - N | `user_sessions` | Một người dùng có nhiều phiên đăng nhập |
-| `categories` | 1 - N | `transactions` | Một danh mục có nhiều giao dịch |
-| `categories` | 1 - N | `budgets` | Một danh mục có nhiều ngân sách theo thời gian |
-| `chat_sessions` | 1 - N | `chat_messages` | Một phiên chat có nhiều tin nhắn |
+|-----------|----------|-----------|------|
+| users | 1 - N | categories | Một User có nhiều Category |
+| users | 1 - N | transactions | Một User có nhiều Transaction |
+| users | 1 - N | budgets | Một User có nhiều Budget |
+| users | 1 - N | notifications | Một User có nhiều Notification |
+| users | 1 - N | chat_sessions | Một User có nhiều Chat Session |
+| users | 1 - N | refresh_tokens | Một User có nhiều Refresh Token |
+| users | 1 - N | user_sessions | Một User có nhiều User Session |
+| categories | 1 - N | transactions | Một Category có nhiều Transaction |
+| categories | 1 - N | budgets | Một Category có nhiều Budget |
+| chat_sessions | 1 - N | chat_messages | Một Chat Session có nhiều Chat Message |
 
 ---
 
-## 12.2 Sơ đồ quan hệ dạng văn bản
+## 8.2 ERD
 
 ```text
 users
 │
 ├── categories
-│      ├── transactions
-│      └── budgets
+│   ├── transactions
+│   └── budgets
 │
 ├── transactions
-│
 ├── budgets
-│
 ├── notifications
 │
 ├── chat_sessions
-│      └── chat_messages
+│   └── chat_messages
 │
 ├── refresh_tokens
-│
 └── user_sessions
 ```
 
 ---
 
-# 13. Thiết kế khóa ngoại
+# 9. Index
 
-## 13.1 Nguyên tắc chung
-
-Các khóa ngoại được sử dụng để đảm bảo dữ liệu tham chiếu luôn hợp lệ.
-
-Ví dụ:
+## users
 
 ```sql
-FOREIGN KEY (user_id)
-REFERENCES users(id)
+UNIQUE KEY uk_users_email (email)
 ```
-
-Hệ thống không sử dụng `ON DELETE CASCADE` cho các bảng nghiệp vụ quan trọng nếu việc xóa tự động có thể làm mất lịch sử dữ liệu.
 
 ---
 
-## 13.2 Chính sách xóa
-
-| Quan hệ | Chính sách đề xuất |
-|---|---|
-| User → Transaction | Không xóa cứng user |
-| User → Category | Không xóa cứng user |
-| User → Budget | Không xóa cứng user |
-| User → Notification | Có thể xóa theo nghiệp vụ |
-| Chat Session → Chat Message | Có thể dùng `ON DELETE CASCADE` |
-| User → Refresh Token | Có thể xóa khi tài khoản bị xóa hoàn toàn |
-| User → User Session | Có thể xóa khi tài khoản bị xóa hoàn toàn |
-
-Với phiên bản hiện tại, tài khoản người dùng không nên bị xóa vật lý. Có thể bổ sung trạng thái tài khoản ở phiên bản sau.
-
----
-
-# 14. Chiến lược Soft Delete
-
-## 14.1 Bảng áp dụng
-
-Trong phiên bản đầu tiên, Soft Delete được áp dụng cho bảng:
-
-```text
-transactions
-```
-
-Giao dịch là dữ liệu nghiệp vụ quan trọng, vì vậy khi người dùng xóa, hệ thống chỉ cập nhật:
+## categories
 
 ```sql
-deleted_at = CURRENT_TIMESTAMP
+INDEX idx_categories_user_id (user_id)
+
+INDEX idx_categories_type (type)
+
+INDEX idx_categories_default (is_default)
+
+UNIQUE KEY uk_categories_user_name_type
+(
+    user_id,
+    name,
+    type
+)
 ```
 
 ---
 
-## 14.2 Quy tắc truy vấn
-
-Mọi truy vấn nghiệp vụ mặc định phải lọc:
+## transactions
 
 ```sql
-deleted_at IS NULL
-```
-
-Ví dụ:
-
-```sql
-SELECT *
-FROM transactions
-WHERE user_id = ?
-  AND deleted_at IS NULL;
-```
-
-Các giao dịch đã xóa không được sử dụng trong:
-
-- Dashboard.
-- Tính tổng thu.
-- Tính tổng chi.
-- Tính tiến độ ngân sách.
-- Phân tích AI.
-- Xuất báo cáo.
-
----
-
-## 14.3 Category không dùng Soft Delete
-
-Danh mục không được xóa nếu đang được giao dịch sử dụng.
-
-Với danh mục chưa được sử dụng, hệ thống có thể cho phép xóa vật lý.
-
-Cách này giúp thiết kế đơn giản hơn nhưng vẫn bảo vệ tính toàn vẹn của dữ liệu lịch sử.
-
----
-
-# 15. Audit Fields
-
-## 15.1 Các trường dùng chung
-
-Các bảng chính sử dụng:
-
-```text
-created_at
-updated_at
-```
-
-Riêng bảng `transactions` có thêm:
-
-```text
-deleted_at
-```
-
----
-
-## 15.2 Quy tắc cập nhật
-
-- `created_at` chỉ được thiết lập một lần khi tạo bản ghi.
-- `updated_at` được cập nhật khi dữ liệu thay đổi.
-- `deleted_at` chỉ được thiết lập khi thực hiện Soft Delete.
-- Thời gian được lưu thống nhất trong Database.
-
----
-
-## 15.3 Kiểu dữ liệu
-
-Khuyến nghị sử dụng:
-
-```sql
-DATETIME(6)
-```
-
-thay cho `TIMESTAMP`.
-
-Lý do:
-
-- Hỗ trợ độ chính xác đến microsecond.
-- Ít phụ thuộc vào giới hạn thời gian của `TIMESTAMP`.
-- Phù hợp với `LocalDateTime` trong Java.
-
----
-
-# 16. Chiến lược Index
-
-## 16.1 Nguyên tắc
-
-Chỉ mục được tạo dựa trên các truy vấn thực tế, không tạo index cho mọi cột.
-
-Ưu tiên các cột:
-
-- Khóa ngoại.
-- Cột thường dùng để lọc.
-- Cột thường dùng để sắp xếp.
-- Tổ hợp cột thường xuất hiện cùng nhau trong điều kiện truy vấn.
-
----
-
-## 16.2 Index đề xuất
-
-### Bảng `transactions`
-
-```sql
-INDEX idx_transactions_user_date (
+INDEX idx_transactions_user_date
+(
     user_id,
     transaction_date
 )
 
-INDEX idx_transactions_user_category_date (
+INDEX idx_transactions_user_category
+(
     user_id,
-    category_id,
-    transaction_date
+    category_id
 )
 
-INDEX idx_transactions_user_type_date (
-    user_id,
-    type,
-    transaction_date
-)
-
-INDEX idx_transactions_deleted_at (
+INDEX idx_transactions_deleted
+(
     deleted_at
 )
-```
 
-Đây là bảng có số lượng dữ liệu lớn nhất nên cần ưu tiên tối ưu.
+INDEX idx_transactions_type
+(
+    type
+)
+```
 
 ---
 
-### Bảng `budgets`
+## budgets
 
 ```sql
-UNIQUE KEY uk_budgets_user_category_month (
+UNIQUE KEY uk_budgets_user_category_month
+(
     user_id,
     category_id,
+    budget_year,
+    budget_month
+)
+
+INDEX idx_budgets_user_month
+(
+    user_id,
+    budget_year,
     budget_month
 )
 ```
 
-Ràng buộc này đảm bảo một người dùng không tạo hai ngân sách cho cùng một danh mục trong cùng một tháng.
-
 ---
 
-### Bảng `notifications`
+## notifications
 
 ```sql
-INDEX idx_notifications_user_read_created (
+INDEX idx_notifications_user_read
+(
     user_id,
-    is_read,
-    created_at
+    is_read
 )
 ```
 
-Hỗ trợ lấy danh sách thông báo chưa đọc mới nhất.
+---
+
+## chat_sessions
+
+```sql
+INDEX idx_chat_sessions_user
+(
+    user_id
+)
+
+INDEX idx_chat_sessions_last_message
+(
+    user_id,
+    last_message_at
+)
+```
 
 ---
 
-### Bảng `chat_messages`
+## chat_messages
 
 ```sql
-INDEX idx_chat_messages_session_created (
+INDEX idx_chat_messages_session
+(
     session_id,
     created_at
 )
 ```
 
-Hỗ trợ đọc lịch sử hội thoại theo thứ tự.
-
 ---
 
-# 17. Ràng buộc dữ liệu
-
-## 17.1 Số tiền
-
-Mọi cột tiền tệ sử dụng:
+## refresh_tokens
 
 ```sql
-DECIMAL(15,2)
+UNIQUE KEY uk_refresh_tokens_hash
+(
+    token_hash
+)
+
+INDEX idx_refresh_tokens_user
+(
+    user_id
+)
+
+INDEX idx_refresh_tokens_expires
+(
+    expires_at
+)
 ```
-
-Không sử dụng:
-
-```text
-FLOAT
-DOUBLE
-```
-
-vì có thể gây sai số khi tính toán tài chính.
 
 ---
 
-## 17.2 Giá trị giao dịch
+## user_sessions
 
 ```sql
-amount > 0
-```
+INDEX idx_user_sessions_user
+(
+    user_id
+)
 
-Số tiền luôn lưu dưới dạng số dương.
-
-Chiều thu hoặc chi được xác định bởi:
-
-```text
-transactions.type
-```
-
-Quy tắc:
-
-```text
-INCOME  → khoản thu
-EXPENSE → khoản chi
-```
-
-SmartSpend không phải ví điện tử nên hệ thống không cập nhật số dư ví.
-
-Chênh lệch tài chính được tính theo công thức:
-
-```text
-Chênh lệch = Tổng thu - Tổng chi
+INDEX idx_user_sessions_last_active
+(
+    user_id,
+    last_active_at
+)
 ```
 
 ---
 
-## 17.3 Loại giao dịch và danh mục
+# 10. Soft Delete
 
-Cả `transactions` và `categories` đều lưu trường `type`.
+Chỉ bảng `transactions` sử dụng Soft Delete.
 
-Vai trò:
-
-| Thành phần | Vai trò của `type` |
-|---|---|
-| Transaction | Xác định giao dịch là Thu hay Chi |
-| Category | Xác định danh mục dùng cho Thu hay Chi |
-
-Hai giá trị phải khớp nhau.
-
-Ví dụ hợp lệ:
-
-```text
-Transaction type: EXPENSE
-Category: Ăn uống
-Category type: EXPENSE
+```sql
+UPDATE transactions
+SET deleted_at = CURRENT_TIMESTAMP(6)
+WHERE id = ?;
 ```
 
-Ví dụ không hợp lệ:
+Mọi truy vấn nghiệp vụ phải bổ sung điều kiện:
 
-```text
-Transaction type: INCOME
-Category: Ăn uống
-Category type: EXPENSE
-```
-
-Ràng buộc này được kiểm tra tại Service Layer vì Database không thể dễ dàng tạo `CHECK CONSTRAINT` tham chiếu sang bảng khác.
-
----
-
-## 17.4 Ngày giao dịch
-
-`transaction_date` không được lớn hơn ngày hiện tại.
-
-Quy tắc này được kiểm tra ở:
-
-- DTO Validation.
-- Service Layer.
-
-Không nên phụ thuộc hoàn toàn vào Database vì việc so sánh ngày hiện tại có thể liên quan đến múi giờ của ứng dụng.
-
----
-
-# 18. Sơ đồ ERD
-
-Bạn có thể giữ phần dưới đây trong tài liệu để sau này thay bằng hình ERD từ Draw.io.
-
-```text
-users
-│
-├── categories
-│      ├── transactions
-│      └── budgets
-│
-├── transactions
-│
-├── budgets
-│
-├── notifications
-│
-├── chat_sessions
-│      └── chat_messages
-│
-├── refresh_tokens
-│
-└── user_sessions
-```
-
-Khi đã có ảnh ERD, đặt file tại:
-
-```text
-assets/diagrams/smartspend-erd.png
-```
-
-Sau đó nhúng vào tài liệu:
-
-```markdown
-![ERD SmartSpend](../assets/diagrams/smartspend-erd.png)
+```sql
+deleted_at IS NULL
 ```
 
 ---
 
-# 19. Danh sách bảng cuối cùng
+# 11. Flyway Migration
 
-| STT | Bảng | Vai trò |
-|---:|---|---|
-| 1 | `users` | Lưu tài khoản người dùng |
-| 2 | `categories` | Lưu danh mục thu và chi |
-| 3 | `transactions` | Lưu các khoản thu và chi |
-| 4 | `budgets` | Lưu ngân sách theo tháng và danh mục |
-| 5 | `notifications` | Lưu thông báo của người dùng |
-| 6 | `chat_sessions` | Lưu phiên hội thoại AI |
-| 7 | `chat_messages` | Lưu nội dung hội thoại |
-| 8 | `refresh_tokens` | Lưu Refresh Token đã băm |
-| 9 | `user_sessions` | Lưu thông tin phiên đăng nhập |
+## V1
+
+```text
+V1__create_initial_schema.sql
+```
+
+Tạo toàn bộ schema:
+
+- users
+- categories
+- transactions
+- budgets
+- notifications
+- chat_sessions
+- chat_messages
+- refresh_tokens
+- user_sessions
 
 ---
 
-# 20. Tổng kết
+## V2
 
-Cơ sở dữ liệu của SmartSpend được thiết kế tập trung vào ba nhóm dữ liệu chính:
+```text
+V2__insert_default_categories.sql
+```
 
-1. Dữ liệu người dùng và xác thực.
-2. Dữ liệu quản lý thu nhập, chi tiêu và ngân sách.
-3. Dữ liệu hỗ trợ AI và thông báo.
+Seed dữ liệu danh mục mặc định.
 
-Bảng `transactions` là trung tâm của hệ thống.
+---
 
-Các module Dashboard, Budget, Export và AI đều sử dụng dữ liệu giao dịch để tính toán hoặc phân tích, nhưng không tạo thêm bảng tổng hợp không cần thiết.
+# 12. Tổng kết
 
-Thiết kế hiện tại cố ý không bao gồm:
+Database SmartSpend sử dụng:
 
-- Ví điện tử.
-- Tài khoản ngân hàng.
-- Số dư ví.
-- Chuyển tiền.
-- Thanh toán trực tuyến.
+- MySQL 8
+- InnoDB
+- utf8mb4
+- DATETIME(6)
+- DECIMAL(15,2)
+- BIGINT AUTO_INCREMENT
 
-Điều này giúp SmartSpend giữ đúng phạm vi là một ứng dụng quản lý tài chính cá nhân thông minh, đồng thời giảm độ phức tạp để phù hợp với một dự án Portfolio dành cho sinh viên.
+Toàn bộ thay đổi schema được quản lý bằng Flyway Migration.
